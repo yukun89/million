@@ -74,26 +74,23 @@ class MysqlSafeCursor:
         except:
             return None
 
-
 def GetBollList(currency_type, fetch_size, now_id = 0):
     ctype = currency_type
-    if now_id == 0:
-        UpdateMa(currency_type, duration)
+    # if now_id == 0:
+    #     UpdatePrice(currency_type, duration)
     cursor = MysqlSafeCursor()
-    ktable = Duration2ktable[duration]
-    dsecond = Duration2second[duration]
+    ktable = "boll"
+    dsecond = 24 * 3600
     if now_id <= 0 :
-        select_sql = "select id, close from %s where currency_type='%s' and delta=%d order by price_date desc limit %d" % (ktable, currency_type, step, fetch_size)
+        select_sql = "select id, mid, upper, lower from %s where currency_type='%s' order by price_date desc limit %d" % (ktable, currency_type, fetch_size)
     else :
-        select_sql = "select id, close from %s where currency_type='%s' and delta=%d and id <= %d order by price_date desc limit %d" % (ktable, currency_type, step, now_id, fetch_size)
-        
+        select_sql = "select id, mid, upper, lower from %s where currency_type='%s' and id <= %d order by price_date desc limit %d" % (ktable, currency_type, now_id, fetch_size)
     cursor.execute(select_sql)
     lines = cursor.fetchall()
     price_list = []
-    if lines == None:
-        return
+    if lines == None or len(lines) == 0 or len(lines[0]) == 0:
+        return price_list
     latest_id_in_price = int(lines[0][0])
-    #get the data for calculate MA, lean of data = to_fill_size + step -1
     tmp = latest_id_in_price
     for i in range(len(lines)):
         price = Price(currency_type)
@@ -102,13 +99,14 @@ def GetBollList(currency_type, fetch_size, now_id = 0):
         if i >=1  and tmp - price.id_  != dsecond:
             log_error("some data is lost in table %s || ctype %s || id %d || last_one %d)"%(ktable, ctype, price.id_, tmp))
             exit(-1)
-        price.close_ = line[1]
+        price.boll_mid_ = float(line[1])
+        price.boll_high_ = float(line[2])
+        price.boll_low_ = float(line[3])
         price_list.append(price)
         tmp = price.id_
     return price_list
 
-
-def GetMAList(currency_type, duration, step, fetch_size, now_id = 0):
+def GetMAList(currency_type, duration, fetch_size, now_id = 0):
     ctype = currency_type
     if now_id == 0:
         UpdateMa(currency_type, duration, step)
@@ -116,48 +114,76 @@ def GetMAList(currency_type, duration, step, fetch_size, now_id = 0):
     ktable = Duration2ktable[duration]
     dsecond = Duration2second[duration]
     if now_id <= 0 :
-        select_sql = "select id, close from %s where currency_type='%s' and delta=%d order by price_date desc limit %d" % (ktable, currency_type, step, fetch_size)
+        select_sql = "select id, delta, close from %s where currency_type='%s' order by id, delta desc limit %d" % (ktable, currency_type, fetch_size * 7)
     else :
-        select_sql = "select id, close from %s where currency_type='%s' and delta=%d and id <= %d order by price_date desc limit %d" % (ktable, currency_type, step, now_id, fetch_size)
-        
+        select_sql = "select id, delta, close from %s where currency_type='%s' and id <= %d order by id, delta desc limit %d" % (ktable, currency_type, now_id, fetch_size * 7)
+    print(select_sql)
     cursor.execute(select_sql)
     lines = cursor.fetchall()
     price_list = []
-    if lines == None:
-        return
+    if lines == None or len(lines) == 0 or len(lines[0]) == 0 :
+        return price_list
     latest_id_in_price = int(lines[0][0])
     #get the data for calculate MA, lean of data = to_fill_size + step -1
     tmp = latest_id_in_price
+    price = Price(currency_type)
+    price.id_ = tmp
+    price_list.append(price)
     for i in range(len(lines)):
-        price = Price(currency_type)
         line = lines[i]
-        price.id_ = line[0]
-        if i >=1  and tmp - price.id_  != dsecond:
-            log_error("some data is lost in table %s || ctype %s || id %d || last_one %d)"%(ktable, ctype, price.id_, tmp))
+        tid = line[0]
+        #price.id_ = line[0]
+        if i >=1  and ( tid + dsecond != tmp and tid != tmp):
+            log_error("some data is lost in table %s || ctype %s || id %d || last_one %d || real duration %d || expected_duration: %d)"%(ktable, ctype, tid, tmp, tmp - tid, dsecond))
             exit(-1)
-        price.close_ = line[1]
-        price_list.append(price)
-        tmp = price.id_
+        price = price_list[len(price_list) - 1]
+        if tid != price.id_:
+            price = Price(currency_type)
+            price.id_ = tid
+            price_list.append(price)
+        tdelta = int(line[1])
+        tclose = line[2]
+        if tdelta == 5:
+            price.ma5_ = tclose
+            pass
+        elif tdelta == 10:
+            price.ma10_ = tclose
+            pass
+        elif tdelta == 20:
+            price.ma20_ = tclose
+            pass
+        elif tdelta == 30:
+            price.ma30_ = tclose
+            pass
+        elif tdelta == 60:
+            price.ma60_ = tclose
+            pass
+        elif tdelta == 90:
+            price.ma90_ = tclose
+            pass
+        elif tdelta == 120:
+            price.ma120_ = tclose
+            pass
+        tmp = tid
     return price_list
-    pass
 
 def GetPriceList(currency_type, duration, fetch_size, now_id = 0):
     ctype = currency_type
     if now_id == 0:
-        UpdateKline(currency_type, duration)
+        UpdatePrice(currency_type, duration)
     cursor = MysqlSafeCursor()
     ptable = Duration2ptable[duration]
     dsecond = Duration2second[duration]
     if now_id <= 0 :
         select_sql = "select id, close, open, high, low from %s where currency_type='%s' order by price_date desc limit %d" % (ptable, currency_type, fetch_size)
     else :
-        select_sql = "select id, close, open, high, low from %s where currency_type='%s' id <= %d order by price_date desc limit %d" % (ptable, currency_type, now_id, fetch_size)
-        
+        select_sql = "select id, close, open, high, low from %s where currency_type='%s' and id < %d order by price_date desc limit %d" % (ptable, currency_type, now_id+1, fetch_size)
     cursor.execute(select_sql)
     lines = cursor.fetchall()
     price_list = []
-    if lines == None:
-        return
+    if lines == None or len(lines) == 0:
+        log_error(select_sql)
+        return price_list
     latest_id_in_price = int(lines[0][0])
     #get the data for calculate MA, lean of data = to_fill_size + step -1
     tmp = latest_id_in_price
@@ -213,46 +239,55 @@ def UpdateBoll(currency_type):
             log_error("Failed to execute %s"%sql)
     pass
 
-def UpdateMa(currency_type, duration, step = 5):
+def UpdateMa(currency_type, duration, step = 5, refresh = True):
     ctype = currency_type
     ktable = Duration2ktable[duration]
     ptable = Duration2ptable[duration]
     tid, to_fill_size = getLatestIdOfPrice(currency_type, duration, ktable)
     if to_fill_size < 1:
-        log_info("MA%d of %s@%s is up to date"%(step, currency_type, duration))
-        return 0
+        if refresh:
+            to_fill_size = 1
+        else:
+            log_info("MA%d of %s@%s is up to date"%(step, currency_type, duration))
+            return 0
     fetch_size = to_fill_size + step -1
     price_list = GetPriceList(currency_type, duration, fetch_size)
     if len(price_list) != fetch_size:
         log_warn("no enough data in table %s of ctype %s @ step %d. get %d items while %d items is expected"%(ptable, ctype, step, len(price_list), fetch_size));
     cursor = MysqlSafeCursor()
-    for i in range(to_fill_size):
+    for i in range(len(price_list)):
         length = step
         if i + length >= len(price_list):
             length = len(price_list) - i
-        if length == 0 :
+        if length != step :
+            log_warn("%d-%d no enough data for the unit %s on %s"%(length, step, ctype, price_list[i].id_))
             break
         array = price_list[i:i+length]
         close_price_list = [x.close_ for x in array]
-        price_list[i].avg_ = sum(close_price_list)/length
-        tmp = price_list[i]
+        ma = sum(close_price_list)/length
+        tmp = Price(currency_type)
+        tmp.id_ = price_list[i].id_
+        tmp.close_ = ma
         #id, currency_type, close, price_date
         sql="insert into %s values (%d,\'%s\',%f, %d, \'%s\') on duplicate key update id=%d,currency_type=\'%s\',close=%f,delta=%d,price_date=\'%s\'"%\
             (ktable, tmp.id_, currency_type, tmp.close_, step, timestamp2string(tmp.id_)
              ,tmp.id_, currency_type, tmp.close_, step, timestamp2string(tmp.id_))
         if cursor.execute(sql) == False:
             log_error("Failed to execute %s"%sql)
-    log_info("Succeed Update %d items about MA%d for %s@%s"%(to_fill_size, step, currency_type, duration))
+    log_info("Succeed Update %d items about MA%d for %s@%s"%(100, step, currency_type, duration))
     return 0
 
 #从某个表格中获取最新数据，返回最新id和需要更新的数量.
 #注意我们返回的是完整数据的最新id。例如数据为1， 2， 3，4， 6， 7， 8. 那么我们返回的值是4
-def getLatestIdOfPrice(currency_type, duration, table):
+def getLatestIdOfPrice(currency_type, duration, table, delta = 0):
     now  = int(time.time())
     missed_number = 2000
     one_month_early = now - 3600 * 24 * 30
     cursor = MysqlSafeCursor()
-    cursor.execute("select id from %s where currency_type='%s' and id > %d order by id asc limit 2000" % (table, currency_type, one_month_early))
+    if delta == 0 :
+        cursor.execute("select id from %s where currency_type='%s' and id > %d order by id asc limit 100000" % (table, currency_type, one_month_early))
+    else:
+        cursor.execute("select id from %s where currency_type='%s' and id > %d and delta = %d order by id asc limit 100000" % (table, currency_type, one_month_early, delta))
     fields = cursor.fetchall()
     if fields == None :
         return 0, missed_number
@@ -268,12 +303,7 @@ def getLatestIdOfPrice(currency_type, duration, table):
     log_info("now is %d, while the latest id is %d for currency %s in table %s. %d items missing)"%(now, latest_record_date_id, currency_type, table, missed_number))
     return latest_record_date_id, missed_number
 
-def UpdateDailyKline(currency_type):
-    UpdateKline(currency_type, Day)
-    return
-
-#更新mysql中存储的K线指标
-def UpdateKline(currency_type, duration, refresh = False):
+def UpdatePrice(currency_type, duration, refresh = False):
     """
     :param period: "1min"  "5min"  "15min"  "30min"  "60min"   "4hour" "1day"
     :param currency_type: "htusdt" ...

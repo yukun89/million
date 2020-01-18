@@ -12,8 +12,8 @@ fmt = logging.Formatter("[%(levelname)s\t] %(asctime)s %(filename)s:%(lineno)s %
 rht.setFormatter(fmt)
 logger.addHandler(rht)
 
-debug = logger.debug
+log_debug = logger.debug
+critical = logger.critical
 log_info = logger.info
 log_warn = logger.warn
 log_error = logger.error
-critical = logger.critical

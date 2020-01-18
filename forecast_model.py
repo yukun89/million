@@ -17,8 +17,7 @@ from hbapi import HuobiServices as api
 class Model:
 
     #引入一个指标：boll曲线波动率(High - Low)/Mid
-    def __init__(self, currency_type):
-        self.currency_type_ = currency_type
+    def __init__(self):
         self.id_ = 0
         pass
 
@@ -29,12 +28,26 @@ class Model:
     def GetModels():
         pass
 
-    ##横盘整理:最近1/2/4周，boll曲线波动率<5%
-    def IsStatic(boll_list):
-        boll_change_ratio = map
+    ##横盘整理:最近1/2/4周，boll曲线波动率<10%的天数在80%以上
+    def IsStatic(self, price_list, change_ratio = 0.1, valid_data_ratio = 0.8):
+        boll_change_ratio = 0.10
+        valid_data_ratio = 0.8
+        if len(price_list) < 28:
+            return False
+        durations = [7, 14, 28]
+        for duration in durations:
+            dayNum = duration
+            validDayNum = 0
+            for index in range(dayNum):
+                thisDayPrice = price_list[index]
+                if thisDayPrice.boll_high_ < thisDayPrice.boll_low_ * (1 + boll_change_ratio):
+                    validDayNum += 1
+            if validDayNum  < dayNum * valid_data_ratio:
+                return False
+        return True
+    def IsBollLowest(self, price_list):
+        return price_list[1].boll_low_ * 1.003 < price_list[0].boll_low_ and price_list[1].boll_low_ * 1.003 < price_list[2].boll_low_
         pass
-
-    ##5% < delta_boll_ratio_30 < 10% && delta_boll_ratio_30 < delta_boll_ratio_14 < delta_boll_ratio_7 && M5 > M10 > M20
     def IsUpStart():
         pass
 

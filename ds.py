@@ -37,6 +37,17 @@ class Price:
         self.amount_ = float(1.0)
         self.count_ = int(1)
         self.avg_ = float(1.0)
+        #技术指标
+        self.ma5_ = float(1.0)
+        self.ma10_ = float(1.0)
+        self.ma20_ = float(1.0)
+        self.ma30_ = float(1.0)
+        self.ma60_ = float(1.0)
+        self.ma90_ = float(1.0)
+        self.ma120_ = float(1.0)
+        self.boll_high_ = float(1.0)
+        self.boll_low_ = float(1.0)
+        self.boll_mid_ = float(1.0)
         pass
 
     def ToDict(self):
