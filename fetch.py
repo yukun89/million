@@ -33,7 +33,7 @@ def get_current_kline(currency_type="ht",to_another="usdt", period="1min", depth
     try:
         klines = api.get_kline(currency_to_another, period, depth)
     except:
-        log_error("get kline failed for %s"%currency_to_another)
+        log_error("huobi API ERROR get kline failed for %s"%currency_to_another)
         return resp
     else:
         pass

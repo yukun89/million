@@ -21,33 +21,70 @@ class Model:
         self.id_ = 0
         pass
 
-    def SetClock(clock):
-        self.id_ = clock
-        pass
-
     def GetModels():
         pass
 
-    ##横盘整理:最近1/2/4周，boll曲线波动率<10%的天数在80%以上
-    def IsStatic(self, price_list, change_ratio = 0.1, valid_data_ratio = 0.8):
-        boll_change_ratio = 0.10
-        valid_data_ratio = 0.8
-        if len(price_list) < 28:
-            return False
-        durations = [7, 14, 28]
-        for duration in durations:
-            dayNum = duration
-            validDayNum = 0
-            for index in range(dayNum):
-                thisDayPrice = price_list[index]
-                if thisDayPrice.boll_high_ < thisDayPrice.boll_low_ * (1 + boll_change_ratio):
-                    validDayNum += 1
-            if validDayNum  < dayNum * valid_data_ratio:
+    def Stable(self, price_list):
+        factor = 0
+        length = len(price_list)
+        if length < 1:
+            return
+        array = price_list
+        close_price_list = [x.close_ for x in array]
+        avg  = sum(close_price_list)/length
+        variance = sum([(avg - x)*(avg - x) for x in close_price_list])/length
+        std_variance = variance ** 0.5
+
+        diff_percent = 0
+        max_value = 0
+        min_value = 1000000
+        for data in price_list:
+            if data.high_ > 1.15 * data.low_:
                 return False
-        return True
+            if data.high_ > max_value:
+                max_value = data.high_
+            if data.low_ < max_value:
+                max_value = data.low_
+
+        if max_value > 1.2 * min_value:
+            return False
+
+        return float(std_variance)/float(avg) < 0.01
+
+    def BollStableFactor(self, price_list, boll_change_ratio = 0.15):
+        boll_change_ratio = boll_change_ratio
+        valid_data_ratio = 0.8
+        dayNum = len(price_list)
+        if dayNum == 0:
+            return 0.0
+        validDayNum = 0
+        for index in range(dayNum):
+            thisDayPrice = price_list[index]
+            if thisDayPrice.boll_high_ < thisDayPrice.boll_low_ * (1 + boll_change_ratio):
+                max_value = max(thisDayPrice.open_, thisDayPrice.close_)
+                min_value = min(thisDayPrice.open_, thisDayPrice.close_)
+                if max_value < 1.08 * min_value:
+                    validDayNum += 1
+        return 1.0 * validDayNum / dayNum
+
     def IsBollLowest(self, price_list):
         return price_list[1].boll_low_ * 1.003 < price_list[0].boll_low_ and price_list[1].boll_low_ * 1.003 < price_list[2].boll_low_
         pass
+
+
+    def RapidUpFactor(self, datas):
+
+        #极速上涨，应该卖出 15pp/1day, 25pp/2day, 30pp/3day
+        rapid_factor = 0
+        if datas[0].high_ > 1.15 * datas[0].open_:
+            rapid_factor = 1
+        elif datas[1].high_ > 1.25 * datas[0].open_:
+            rapid_factor = 1
+        elif datas[3].high_ > 1.30 * datas[0].open_:
+            rapid_factor = 1
+
+        return rapid_factor
+
     def IsUpStart():
         pass
 

@@ -114,10 +114,9 @@ def GetMAList(currency_type, duration, fetch_size, now_id = 0):
     ktable = Duration2ktable[duration]
     dsecond = Duration2second[duration]
     if now_id <= 0 :
-        select_sql = "select id, delta, close from %s where currency_type='%s' order by id, delta desc limit %d" % (ktable, currency_type, fetch_size * 7)
+        select_sql = "select id, delta, close from %s where currency_type='%s' order by id desc, delta desc limit %d" % (ktable, currency_type, fetch_size * 7)
     else :
-        select_sql = "select id, delta, close from %s where currency_type='%s' and id <= %d order by id, delta desc limit %d" % (ktable, currency_type, now_id, fetch_size * 7)
-    print(select_sql)
+        select_sql = "select id, delta, close from %s where currency_type='%s' and id <= %d order by id desc, delta desc limit %d" % (ktable, currency_type, now_id, fetch_size * 7)
     cursor.execute(select_sql)
     lines = cursor.fetchall()
     price_list = []
@@ -142,7 +141,7 @@ def GetMAList(currency_type, duration, fetch_size, now_id = 0):
             price.id_ = tid
             price_list.append(price)
         tdelta = int(line[1])
-        tclose = line[2]
+        tclose = float(line[2])
         if tdelta == 5:
             price.ma5_ = tclose
             pass
@@ -300,7 +299,7 @@ def getLatestIdOfPrice(currency_type, duration, table, delta = 0):
             latest_record_date_id = currend_id
     size = int(1.0*(now- latest_record_date_id)/Duration2second[duration])
     missed_number = min(size,2000)
-    log_info("now is %d, while the latest id is %d for currency %s in table %s. %d items missing)"%(now, latest_record_date_id, currency_type, table, missed_number))
+    log_info("now is %d, while the latest id is %d for currency %s in table %s. %d items missing"%(now, latest_record_date_id, currency_type, table, missed_number))
     return latest_record_date_id, missed_number
 
 def UpdatePrice(currency_type, duration, refresh = False):
