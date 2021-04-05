@@ -20,12 +20,11 @@ import requests
 ACCESS_KEY = "8276eb09-c4508669-85d1d656-cdgs9k03f3" #TODO
 SECRET_KEY = "af8c47f6-218d4964-3d3cd828-3d016" #TODO
 
-
-
 # API 请求地址
 MARKET_URL = "https://api.huobi.pro"
 TRADE_URL = "https://api.huobi.pro"
 
+HBDM_URL = "https://api.hbdm.com"
 # 首次运行可通过get_accounts()获取acct_id,然后直接赋值,减少重复获取。
 ACCOUNT_ID = 177232#TODO
 

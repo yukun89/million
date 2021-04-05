@@ -1,28 +1,131 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# File              : main.py
+# Date              : 29.12.2020
+# Last Modified Date: 29.12.2020
 
 from forecast_model import *
 from ds import *
 from store import *
 from hbapi import HuobiServices as api
+from util import *
 import threading
 import time
 import argparse
+import mail
+import indicator
+import math
+from redis_cli import *
 
 #2017年11月1号为计算的起始点
 zero_start = 1509465600
 OneDay = 24 * 3600
 
-def store():
-    #Clist = [BTC]
-    #Dlist = [Day]
-    #Slist = [5, 10]
+
+class TimerLock:
+    def __init__(self, key, value, interval):
+        self.key_ = key
+        self.val_ = value
+        self.interval_ = interval
+        pass
+    def lock(self):
+        g_redis.set(self.key_, self.val_, ex=self.interval_)
+    def is_locked(self):
+        val = g_redis.get(self.key_)
+        if val is not None:
+            log_debug("key %s is already saved"%self.key_)
+            return True
+        return False
+
+class RedularTask:
+    def __init__(self, interval=600):
+        self.interval_ = interval
+        pass
+
+def store_ls_ratio():
+    #更新long short 信息
+    store_lock = TimerLock("store_ls_ratio", "val", 600)
+    if store_lock.is_locked() :
+        return 0
+    store_handler = MysqlStore()
+    log_info("======== going to long short info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
+    for ct in Clist:
+        store_handler.StoreLongShortRatio(ct)
+    store_lock.lock()
+
+def store_price():
+    store_lock = TimerLock("store_price", "val", 1800)
+    if store_lock.is_locked() :
+        return 0
+    store_handler = MysqlStore()
+    #更新基础价格信息
+    log_info("======== going to update price info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
     for ct in Clist:
         for duration in Dlist:
-            UpdatePrice(ct, duration, True)
-            for step in Slist:
-                UpdateMa(ct, duration, step, True)
-        UpdateBoll(ct)
+            store_handler.StorePrice(ct, duration, True)
+    store_lock.lock()
+
+def store_ma():
+    store_lock = TimerLock("store_ma", "val", 1800)
+    if store_lock.is_locked() :
+        return 0
+    store_handler = MysqlStore()
+    #更新ma信息
+    log_info("======== going to update ma info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
+    for ct in Clist:
+        for duration in Dlist:
+            store_handler.StoreMa(ct, duration, True)
+    store_lock.lock()
+
+def store_boll():
+    store_lock = TimerLock("store_boll", "val", 1800)
+    if store_lock.is_locked() :
+        return 0
+    store_handler = MysqlStore()
+    #更新boll信息
+    log_info("======== going to update boll info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
+    for ct in Clist:
+        for duration in Dlist:
+            store_handler.StoreBoll(ct, duration)
+    store_lock.lock()
+
+def store():
+    store_ls_ratio()
+    store_price()
+    store_ma()
+    store_boll()
+    return 1
+
+
+def record():
+    recordLock = TimerLock("record", "val", 1800)
+    if recordLock.is_locked():
+        return 0
+    keydata = indicator.Indicator()
+    now  = int(time.time())
+    now_hour=int(math.floor(now/3600))*3600
+    subject="ls_ratio_info"
+    content="*******Begin********\n"
+
+    #生成邮件内容
+    valid_data = False
+    for ct in Clist:
+        lsRatio, diff, percent = keydata.long_short_ratio(ct)
+        item = "ct=%s||ratio=%.2f||diff=%.2f||percent=%.2f\n"%(ct, lsRatio, diff, percent)
+        if percent > 80 or percent < 20 or diff > 20 or diff < -20:
+            valid_data = True
+            content = content + "@@" + item
+        else:
+            content+=item
+
+    content+="********End*******"
+    if valid_data :
+        subject = "Carefull:" + subject
+    mail.SendEmail(subject, content)
+    recordLock.lock()
+    return
+
+
 
 class Ticker(threading.Thread):
     def __init__(self, threadId, name) :
@@ -32,10 +135,68 @@ class Ticker(threading.Thread):
         self.status = -1
         pass
 
+    def lsg(self):
+        #小时级别的落水狗策略: 如果某一小时开盘价与收盘价格在2.95，那么会继续向该方向运动。
+        #止损策略：1.6%
+        #止盈策略：4.9%，任何时刻，相对最低点反弹1.6%，就按照实时价格进行止盈
+        Clist=[BTC]
+        start_list = [0, 10, 20, 30, 40]
+        zero_start = int(time.time())
+        for start_point in start_list:
+            start_point = zero_start - 180 * OneDay + start_point * OneDay
+            for ct in Clist:
+                log_info("simulation start for ctype=%s || stg=lsg"%(ct))
+                current_id = start_point
+                currency_type = ct
+                asset = assets[currency_type]
+                asset.Reset(10000.0)
+                printStart = False
+                while current_id < now :
+                    current_id += 3600
+                    # price_list = GetPriceList(currency_type, duration=Hour, fetch_size=100, current_id)
+                    # ma_list = GetMAList(currency_type, duration=Hour, fetch_size=100, current_id)
+                    # enlarge_factor = 2.95
+
+                    # 判断是否买入
+                    # if price_list[0].close_ > (1+enlarge_factor/100.0) * price_list[0].open_:
+                        # continue
+                    # 判断是否卖出
+        pass
+
+    def heiTianE(self):
+        #黑天鹅策略：上涨行情中，如果48H之内的下跌幅度满足特定数值，可以进行抄底。
+        #Point1: 如何定义上涨行情：Ma5 > Ma10 > Ma20
+        #Point2: 如何下跌幅度:
+        #   * 下跌起始点（4H线的最高价和收盘价的均值）
+        #   * 基准幅度：25%
+        #   * 调整系数：最近五天上涨超过3%的天数的平均涨幅
+        #point3: 仓位控制
+        #   达到目标价位之后，开仓50%;
+        #   每跌5%, 加仓10%
+        now  = int(time.time())
+        Clist=[BTC]
+        start_list = [0, 30, 60]
+        zero_start = (2019 - 1970) * 365 * OneDay
+        for start_point in start_list:
+            start_point = zero_start + start_point * OneDay
+            for ct in Clist:
+                log_info("heiTianE processing for ctyp=%s || start_point=%s"%(ct, timestamp2string(start_point)))
+                current_id = start_point
+                currency_type = ct
+                asset = assets[currency_type]
+                asset.Reset(10000.0)
+                printStart = False
+                while current_id < now :
+                    current_id += 3600 * 24
+                    price_list = GetPriceList(currency_type, Day, 100, current_id)
+                    ma_list = GetMAList(currency_type, Day, 100, current_id)
+                    merge_ma_list(price_list, ma_list)
+                    price_list[0].IsMaUp()
+        pass
+
     def run(self) :
         self.status = 0
         now  = int(time.time())
-        log_info("Huang")
         Clist=[BTC]
         start_list = [0, 60, 120, 180, 240, 300, 360, 420]
         start_list = [180]
@@ -45,13 +206,13 @@ class Ticker(threading.Thread):
                 log_info("processing for ctype of %s"%(ct))
                 current_id = start_point
                 currency_type = ct
-                model = Model()
                 asset = assets[currency_type]
                 asset.Reset(10000.0)
                 printStart = False
+                model = Model()
                 while current_id < now :
                     current_id += 3600 * 24
-                    boll_list = GetBollList(currency_type, 30, current_id)
+                    boll_list = GetBollList(currency_type, Day, 30, current_id)
                     price_list = GetPriceList(currency_type, Day, 30, current_id)
                     ma_list = GetMAList(currency_type, Day, 30, current_id)
                     if ma_list == None or price_list == None or boll_list == None:
@@ -166,28 +327,36 @@ class Store (threading.Thread):
 
     def run(self) :
         self.status = 0
+        last_hour = 0
         while True:
+            start_time = int(time.time())
             store()
-            log_info("sleeping 1H for next round of store")
-            time.sleep(600*2)
+            interval = 300
+            end_time = int(time.time())
+            record()
+            log_info("Store costs %d seconds, sleeping %d seconds for next round of store"%(end_time-start_time, interval))
+            time.sleep(interval)
         pass
 
 assets = {}
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.description='run regression test cases by cases or groups'
-    parser.add_argument("-g","--get", action="store", help="get data from web", dest="get", nargs="?", type=str)
+    parser.description='runing as get/online/forecast'
+    parser.add_argument("-g","--get",      action="store", help="get data from web",      dest="get",      nargs="?", type=str)
     parser.add_argument("-f","--forecast", action="store", help="forecasting of offline", dest="forecast", nargs="?", type=str)
     args = parser.parse_args()
 
     for ct in Clist:
         asset = Asset(ct, 10000.0)
         assets[ct] = asset
+
     if args.get:
+        log_info("main is going to run as get")
         storer = Store(1, "storer-1")
         storer.start()
         storer.join()
         log_info("main unexpected exit")
+
     if args.forecast:
         ticker= Ticker(1, "ticker-1")
         ticker.start()

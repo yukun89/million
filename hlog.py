@@ -3,7 +3,7 @@
 import logging
 import logging.handlers
 from logging import *
-from datetime import *
+import datetime
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 

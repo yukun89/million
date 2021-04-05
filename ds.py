@@ -1,42 +1,6 @@
 from hlog import *
-import time
-import datetime
-
-Hour="60min"
-Quarter="4hour"
-Day="1day"
-Week="1week"
-
-#Duration的list
-Dlist = (Hour, Quarter, Day, Week)
-
-BTC="btc"
-EOS="eos"
-OMG="omg"
-DASH="dash"
-HT="ht"
-ETC="etc"
-ETH="eth"
-LTC="ltc"
-XRP="xrp"
-
-#Currency的List
-Clist = (BTC, EOS, OMG, DASH, HT, ETC, ETH, LTC, XRP)
-
-#Step的list
-Slist = (5, 10, 20, 30, 60, 90, 120)
-Duration2ptable = {Hour: "hourly_price", Quarter: "quarter_price", Day: "daily_price", Week: "weekly_price"}
-Duration2ktable = {Hour: "hourly_kline", Quarter: "quarter_kline", Day: "daily_kline", Week: "weekly_kline"}
-Duration2second = {"1min":60,"5min":300,"15min":900,"30min":1800, Hour:3600, Quarter:14400, Day:86400, Week:604800,"30day":2592000}
-
-def timestamp2dstring(timeStamp):
-    try:
-        d = datetime.datetime.fromtimestamp(timeStamp)
-        str1 = d.strftime("%Y-%m-%d")
-        return str1
-    except Exception as e:
-        print(e)
-    return ''
+from  var import *
+from util import *
 
 class Order:
     #switch = -1: buy, switch = 1: sell
@@ -48,6 +12,7 @@ class Order:
         self.price_ = price
         self.status_ = 0
 
+#描述某一个账户的相关信息
 class Asset:
     def __init__(self, currency_type, usdt = 10000.0):
         self.ct_ = currency_type
@@ -57,6 +22,7 @@ class Asset:
         self.buy_list_ = []
         self.sell_list_ = []
 
+    #设定账户init状态
     def Reset(self, usdt = 10000.0):
         self.usdt_ = usdt
         self.ct_volume_ = 0
@@ -64,7 +30,8 @@ class Asset:
         self.buy_list_ = []
         self.sell_list_ = []
 
-
+    #amount非零，表示购买多少usdt
+    #一般情况下，我们限volume和price进行购买
     def Buy(self, volume, dprice, amount = 0, tid = 0, buy_model=""):
         price = float(dprice)
         if self.usdt_ <= 100:
@@ -116,6 +83,28 @@ class Asset:
         price = float(dprice)
         log_info("[%s] %s: vol %.4f || price %.2f || usdt %08.2f || total %.2f || bs %d-%d"%(prefix, self.ct_, self.ct_volume_, price, self.usdt_, self.usdt_ + price * self.ct_volume_, len(self.buy_list_), len(self.sell_list_)))
         return
+
+class BuySellRatio:
+    def __init__(self, currency_type):
+        self.id_ = int(0)
+        self.currency_type_ = currency_type
+        self.buy_ratio_ = float(0.5)
+        self.sell_ratio_ = float(0.5)
+        self.contract_type_ = "usdt"#dued, currency_based
+        #0, 1, 2 交割合约；币本位永续合约；usdt永续合约
+        self.ls_type_ = "amount"
+
+class LongShortRatio:
+    def __init__(self, currency_type):
+        self.id_ = int(0)
+        self.currency_type_ = currency_type
+        self.account_long_short_ratio_ = float(1.0)
+        self.amount_long_short_ratio_ = float(1.0)
+        pass
+    def get_long_short_ratio(self):
+        if self.account_long_short_ratio_ < 0.00001:
+            return 1.0
+        return self.amount_long_short_ratio_ / self.account_long_short_ratio_
 
 class Price:
     def __init__(self, currency_type):
@@ -176,6 +165,18 @@ class Price:
         else:
             return 0
 
+    #多头行情
+    def IsMaUp(self):
+        if self.ma5_ > self.ma10_ and self.ma10_ > self.ma20_:
+            return True
+        return False
+
+    #空头行情
+    def IsMaDown(self):
+        if self.ma5_ < self.ma10_ and self.ma10_ < self.ma20_:
+            return True
+        return False
+
     def CalculateMaSellVolFactor(self):
         factor = 0
         if self.ma10_ < self.ma20_ * (1-0.015) :
@@ -206,6 +207,23 @@ class Price:
         smaller = min(self.open_, self.close_)
         return self.low_ < smaller * (1 - 0.07)
 
+    def merge_ma(self, ma):
+        if self.id_ != ma.id_:
+            return False
+        self.ma5_ = float(ma.ma5_)
+        self.ma10_ = float(ma.ma10_)
+        self.ma20_ = float(ma.ma20_)
+        self.ma30_ = float(ma.ma30_)
+        self.ma60_ = float(ma.ma60_)
+        self.ma90_ = float(ma.ma90_)
+
+    def merge_boll(self, boll):
+        if self.id_ != ma.id_:
+            return False
+        self.boll_mid_ = float(boll.boll_mid_)
+        self.boll_low_ = float(boll.boll_low_)
+        self.boll_high_ = float(boll.boll_high_)
+
     def merge_mpb(self, p, b):
         #把ma与price和bollmerge起来
         if self.id_ != p.id_ or self.id_ != b.id_:
@@ -220,6 +238,29 @@ class Price:
         self.boll_low_ = float(b.boll_low_)
         return True
 
+def merge_ma_list(pricelist1, malist):
+    len1 = len(pricelist1)
+    len2 = len(malist)
+    if len1 != len2:
+        return False
+    if pricelist1[0].id_ != malist[0].id_:
+        return False
+    if pricelist1[-1].id_ != malist[-1].id_:
+        return False
+    for i in range(0, len1):
+        pricelist1.merge_ma(malist)
+    pass
+
+class Order:
+    def __init__(self, currency_type):
+        self.status = -1
+        #0:挂单， 1 取消， 2 成交
+        self.buy_ = True #买单
+        self.currency_type_ = currency_type
+        self.volume_ = 1.0
+        self.price_ = 1.0
+        self.created_timestamp_ = 0
+        #任何挂单在1H之内没有成交需要撤销, 重新挂单(计划委托单)
 
 class TradeParam:
     def __init__(self):

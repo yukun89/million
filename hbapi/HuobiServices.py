@@ -5,8 +5,7 @@
 # @QQ      : 375235513
 # @github  : https://github.com/KlausQIU
 
-#from hbapi.Utils import *
-from hbapi.Utils import *
+from .Utils import *
 
 '''
 Market data API
@@ -523,5 +522,33 @@ def margin_balance(symbol):
     return api_key_get(params, url)
 
 
-if __name__ == '__main__':
-    print (get_accounts())
+
+#=======合约多空比信息
+#交割合约
+#curl "https://api.hbdm.com/api/v1/contract_elite_account_ratio?symbol=BTC&period=60min"
+
+#usdt 合约
+#curl "https://api.hbdm.com/linear-swap-api/v1/swap_elite_account_ratio?contract_code=BTC-USDT&period=60min"
+
+#币本位合约
+def get_long_short_ratio(contract_type, ls_type, symbol, period):
+    urls={"dued_account_url":"/api/v1/contract_elite_account_ratio",
+            "dued_amount_url":"/api/v1/contract_elite_position_ratio",
+            "usdt_account_url":"/linear-swap-api/v1/swap_elite_account_ratio",
+            "usdt_amount_url":"/linear-swap-api/v1/swap_elite_position_ratio",
+            "currency_based_account_url":"/swap-api/v1/swap_elite_account_ratio",
+            "currency_based_amount_url":"/swap-api/v1/swap_elite_position_ratio"}
+    params = {}
+    swap_type="USDT"
+    if contract_type=="currency_based":
+        swap_type="USD"
+    params["contract_code"]="%s-%s"%(symbol,swap_type)
+    params["period"] = period
+    params["symbol"] = symbol
+    url_key = "%s_%s_url"%(contract_type, ls_type)
+    url = urls[url_key]
+
+    full_url = HBDM_URL + url
+    return http_get_request(full_url, params)
+
+
