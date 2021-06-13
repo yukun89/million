@@ -8,8 +8,11 @@ import pymysql
 import time
 import cmath
 from decimal import Decimal
+import orm
+from orm import *
 from orm import Schema as schema
-from orm import HbDb as huobi_db
+import copy
+import var
 import copy
 import var
 
@@ -419,32 +422,25 @@ class MysqlStore:
 
         return 0
 
-    #获取最近28天的多空比
-    def GetLSRatio(self, currency_type, market, ts_end = 0):
+    #获取最近10天的多空比
+    def GetLSRatio(self, contract_type, currency_type, market, ts_end = 0, period=var.Day):
         if ts_end == 0:
             ts_end = int(time.time())
-        fields = ['id', 'account_long_short_ratio', 'amount_long_short_ratio']
-        table = 'long_short_ratio'
-        condition = "currency_type='%s' and market='%s' and id <= %d "%(currency_type, market, ts_end)
-        display = 'order by id desc limit 672'
-        res = Query(fields, table, condition, display)
-        lsRatioList = []
-        if res.ok_ == True:
-            for line in res.data_:
-                lsRatio = LongShortRatio(currency_type)
-                lsRatio.id_ = line['id']
-                lsRatio.account_long_short_ratio_ = line['account_long_short_ratio']
-                lsRatio.amount_long_short_ratio_ = line['amount_long_short_ratio']
-                lsRatioList.append(lsRatio)
-
-        return lsRatioList
+        ts_begin = ts_end - 3600 * 24 * 10
+        latestLsRatioLines = orm.session.query(schema.LongShortRatio).filter(schema.LongShortRatio.market==market,
+                schema.LongShortRatio.contract_type==contract_type,
+                schema.LongShortRatio.currency_type==currency_type,
+                schema.LongShortRatio.id<=ts_end,
+                schema.LongShortRatio.id>=ts_begin).order_by(schema.LongShortRatio.id.desc()).all()
+        orm.session.commit()
+        return latestLsRatioLines
 
     def get_ts_set(bsList):
         res = set([bsInfo.id_ for bsInfo in bsList])
         return res
 
-    def StoreLongShortRatio(self, currency_type, period=Hour):
-        log_info("going to store hourly long short ratio. currency_type=%s"%(currency_type))
+    def StoreLongShortRatio(self, currency_type, period=var.FMin):
+        log_info("going to store  long short ratio. currency_type=%s|| period=%s"%(currency_type, period))
         align_seconds = var.Duration2second[period]
 
         market = 'Huobi'
@@ -457,14 +453,15 @@ class MysqlStore:
             base_lsr.contract_type = contract_type
 
             #获取最近的三十条记录
-            latestLsRatioLines = huobi_db.session.query(schema.LongShortRatio).filter(schema.LongShortRatio.market=='Huobi',
+            latestLsRatioLines = orm.session.query(schema.LongShortRatio).filter(schema.LongShortRatio.market=='Huobi',
                     schema.LongShortRatio.contract_type==contract_type,
-                    schema.LongShortRatio.currency_type==currency_type).order_by(schema.LongShortRatio.id.desc()).limit(30).all()
-            huobi_db.session.commit()
+                    schema.LongShortRatio.currency_type==currency_type,
+                    schema.LongShortRatio.id%align_seconds==0).order_by(schema.LongShortRatio.id.desc()).limit(100).all()
+            orm.session.commit()
             contains = set()
             for each in latestLsRatioLines:
                 contains.add(int(each.id))
-            log_info("exists key for contract_type=%s, market=%s, currency_type=%s. [%s]"%(contract_type, market, currency_type, contains))
+            log_info("exists key for period=%s, contract_type=%s, market=%s, currency_type=%s. [%s]"%(period, contract_type, market, currency_type, contains))
 
             #获取多空比数据，注意：多空比数据中的时间序列可能不等
             #提取多空比中公共的时间序列数据，实现同一时间序列的原子插入
@@ -487,7 +484,10 @@ class MysqlStore:
                         newLsr = schema.LongShortRatio()
                         newLsr = copy.deepcopy(base_lsr)
                         db_lines_to_store[bsInfo.id_] = newLsr
-                        log_info("new sql line: %s"%newLsr.__dict__.items())
+                        newLsr.amount_buy_ratio = -1.0
+                        newLsr.amount_sell_ratio = -1.0
+                        newLsr.account_buy_ratio = -1.0
+                        newLsr.account_sell_ratio = -1.0
                     tmpBsInfo = db_lines_to_store[bsInfo.id_]
                     if ls_type == "amount":
                         tmpBsInfo.amount_buy_ratio = bsInfo.buy_ratio_
@@ -501,51 +501,9 @@ class MysqlStore:
                 if bsInfoLine.amount_buy_ratio <= 0 or bsInfoLine.account_buy_ratio <= 0:
                     #数据完整性验证
                     continue
-                log_info("going to store sql line: %s"%bsInfoLine.__dict__.items())
-                huobi_db.session.add(bsInfoLine)
-            huobi_db.session.commit()
+                orm.session.add(bsInfoLine)
+            orm.session.commit()
 
-
-    #记录Hour级别的LongShort数据
-    def StoreLSRatio(self, currency_type):
-
-        log_info("going to store hourly long short ratio. currency_type=%s"%(currency_type))
-
-        Huobi='Huobi'
-        Okex='Okex'
-        Binance='Binance'
-        Markets = [Huobi, Okex, Binance]
-        cursor = MysqlSafeCursor()
-
-        table = 'long_short_ratio'
-
-        for market in Markets:
-            longShortList = GetCurrentLongShortRatio(currency_type, duration=Hour, exName=market)
-            log_info("StoreLSRatio get %d items from bybt. currency_type=%s || market=%s"%(len(longShortList), currency_type, market))
-
-            condition = "currency_type='%s' and market='%s'"%(currency_type, market)
-            res = Query( ['id'], table, condition, 'order by id desc limit 30')
-            if res.ok_ == False or len(res.data_) == 0:
-                log_error("Failed to get data from bybt of long short ratio. currency_type=%s || market=%s"%(currency_type, market))
-
-            contains = set()
-            for record in res.data_:
-                contains.add(int(record['id']))
-
-            for longShortRatio in longShortList:
-                tid = int(longShortRatio.id_)
-                if tid % 100 != 0:
-                    tid = round(tid/100)*100
-
-                if int(tid) not in contains:
-                    store_long_short_ratio_sql = "insert into long_short_ratio(id, currency_type, market, price_date, account_long_short_ratio, amount_long_short_ratio) \
-                                                                       values (%d, \'%s\',        \'%s\',    \'%s\',                        %f,           %f           )" % \
-                                                                              (tid, currency_type, market, timestamp2string(tid), longShortRatio.account_long_short_ratio_, longShortRatio.amount_long_short_ratio_)
-                    if cursor.execute(store_long_short_ratio_sql) == False:
-                        log_error("Failed to store long short ratio with [%s]"%store_long_short_ratio_sql)
-
-
-    #更新单位时间内的价格信息
     def StorePrice(self, currency_type, duration, refresh = False):
         """
         :param period: "1min"  "5min"  "15min"  "30min"  "60min"   "4hour" "1day"

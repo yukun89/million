@@ -94,17 +94,6 @@ class BuySellRatio:
         #0, 1, 2 交割合约；币本位永续合约；usdt永续合约
         self.ls_type_ = "amount"
 
-class LongShortRatio:
-    def __init__(self, currency_type):
-        self.id_ = int(0)
-        self.currency_type_ = currency_type
-        self.account_long_short_ratio_ = float(1.0)
-        self.amount_long_short_ratio_ = float(1.0)
-        pass
-    def get_long_short_ratio(self):
-        if self.account_long_short_ratio_ < 0.00001:
-            return 1.0
-        return self.amount_long_short_ratio_ / self.account_long_short_ratio_
 
 class Price:
     def __init__(self, currency_type):

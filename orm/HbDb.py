@@ -29,22 +29,3 @@ def create_db_scoped_session():
                       autoflush=False, expire_on_commit=False)
     return session
 
-DbSession = create_db_scoped_session()
-session = DbSession()
-
-def add():
-    #数据库增删改查操作
-    lsr1 = LongShortRatio(id=-1, currency_type='btc', market='huobi', amount_buy_ratio=float(1.2))
-
-    #add
-    session.add(copy.deepcopy(lsr1))
-    session.commit()
-
-def query():
-    data = session.query(LongShortRatio).filter(LongShortRatio.market=='huobi', LongShortRatio.contract_type=='usdt').order_by(LongShortRatio.id.desc()).limit(30).all()
-    session.commit()
-    print(data[0].id)
-    #select
-
-#add()
-

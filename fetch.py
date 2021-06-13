@@ -28,7 +28,7 @@ def GetCurrentLongShortRatio(currency_type=BTC, duration=Hour, exName='Huobi'):
 
 ## buy sell info
 def GetLongShortRatio(contract_type, ls_type, currency_type, period=Hour):
-    return get_long_short_ratio(contract_type, ls_type, currency_type, period=Hour)
+    return get_long_short_ratio(contract_type, ls_type, currency_type, period)
 
 #output: float
 def GetCurrentPrice(currency_type):

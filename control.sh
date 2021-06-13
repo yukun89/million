@@ -4,7 +4,7 @@ stop(){
     pid=`ps aux | grep main | grep python3 | grep -v grep | awk '{print $2}'`
     kill -9 $pid
     redis-cli -h localhost -p 6379 expire record 1
-    echo "" > log/trading.log
+    #echo "" > log/trading.log
 }
 
 start() {

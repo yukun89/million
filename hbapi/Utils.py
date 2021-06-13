@@ -17,8 +17,8 @@ import requests
 
 # 此处填写APIKEY
 
-ACCESS_KEY = "8276eb09-c4508669-85d1d656-cdgs9k03f3" #TODO
-SECRET_KEY = "af8c47f6-218d4964-3d3cd828-3d016" #TODO
+ACCESS_KEY = "32f83722-fc53519c-b5cdf577-vqgdf4gsga" #TODO
+SECRET_KEY = "6726dee5-4e08a6c0-fcfffd0f-924b3" #TODO
 
 # API 请求地址
 MARKET_URL = "https://api.huobi.pro"
@@ -70,7 +70,8 @@ def http_post_request(url, params, add_to_headers=None):
         return
 
 
-def api_key_get(params, request_path):
+#通过密钥进行访问：隐私数据
+def api_key_get(host_info, request_path, params):
     method = 'GET'
     timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
     params.update({'AccessKeyId': ACCESS_KEY,
@@ -78,7 +79,7 @@ def api_key_get(params, request_path):
                    'SignatureVersion': '2',
                    'Timestamp': timestamp})
 
-    host_url = TRADE_URL
+    host_url = host_info
     host_name = urllib.parse.urlparse(host_url).hostname
     host_name = host_name.lower()
     params['Signature'] = createSign(params, method, host_name, request_path, SECRET_KEY)
@@ -87,7 +88,8 @@ def api_key_get(params, request_path):
     return http_get_request(url, params)
 
 
-def api_key_post(params, request_path):
+#通过密钥进行访问：隐私数据
+def api_key_post(host_info, request_path, params):
     method = 'POST'
     timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
     params_to_sign = {'AccessKeyId': ACCESS_KEY,
@@ -95,7 +97,7 @@ def api_key_post(params, request_path):
                       'SignatureVersion': '2',
                       'Timestamp': timestamp}
 
-    host_url = TRADE_URL
+    host_url = host_info
     host_name = urllib.parse.urlparse(host_url).hostname
     host_name = host_name.lower()
     params_to_sign['Signature'] = createSign(params_to_sign, method, host_name, request_path, SECRET_KEY)
@@ -103,6 +105,7 @@ def api_key_post(params, request_path):
     return http_post_request(url, params)
 
 
+#将各个参数进行排序后生成签名
 def createSign(pParams, method, host_url, request_path, secret_key):
     sorted_params = sorted(pParams.items(), key=lambda d: d[0], reverse=False)
     encode_params = urllib.parse.urlencode(sorted_params)

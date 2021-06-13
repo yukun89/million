@@ -550,5 +550,47 @@ def get_long_short_ratio(contract_type, ls_type, symbol, period):
 
     full_url = HBDM_URL + url
     return http_get_request(full_url, params)
+"""
+{
+    "status": "ok",
+    "data": {
+        "symbol": "BTC",
+        "tick": [
+            {
+                "volume": 2124.0000000000000000,
+                "amount_type": 1,
+                "ts": 1603695600000,
+                "value": 27771.93720000000000000000000000000000000
+            }
+        ],
+        "contract_code": "BTC-USDT"
+    },
+    "ts": 1603695899986
+}
+"""
+def get_interest_volume(contract_type, symbol, period, size=48):
+    urls={"usdt":"/linear-swap-api/v1/swap_his_open_interest",
+            "dued":"/api/v1/contract_his_open_interest",
+            "currency_based":"/swap-api/v1/swap_his_open_interest"}
+    params = {}
+    swap_type="USDT"
+    if contract_type=="currency_based":
+        swap_type="USD"
+    params["contract_code"]="%s-%s"%(symbol,swap_type)
+    params["period"] = period
+    params["amount_type"] = 2#1 张；2币
+    
+    return http_get_request(full_url, params)
 
-
+def get_user_asset_info(contract_type, symbol):
+    urls={"usdt":"/linear-swap-api/v1/swap_account_position_info",
+            "dued":"",
+            "currency_based":""}
+    params = {}
+    swap_type="USDT"
+    if contract_type =="currency_based":
+        swap_type="USD"
+    params["contract_code"]="%s-%s"%(symbol,swap_type)
+    url_key = "%s"%(contract_type)
+    url = urls[url_key]
+    return api_key_post(HBDM_URL, url, params)

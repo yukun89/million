@@ -12,6 +12,7 @@ import time
 import datetime
 #from orm import Schema as schema
 #from orm import HbDb as huobi_db
+from store import *
 
 DEBUG = 1
 
@@ -441,7 +442,6 @@ if __name__ == '__main__':
     #get_raw_price_data()
     # print(bybt.get_account_long_short_ratio(symbol= 'xrp', timeType= 2))
     #print("API result:", get_current_long_short_info())
-    #StoreLSRatio('btc')
     #print("create order")
     #print("get order info")
     #print(get_order_info("35600450334"))
@@ -450,11 +450,11 @@ if __name__ == '__main__':
     # print("API result:", get_interest_amount_volume(BTC))
     monitor = Indicator()
 
-    huobi_db.Query()
-    # for ct in [BTC, LTC, ETH, BSV, OMG]:
     for ct in Clist:
         for i in range(0, 28):
             now = int(time.time())
-            #monitor.long_short_ratio(ct, now - i*3600*24)
+            monitor.long_short_ratio(ct, now - i*3600*4)
             pass
-   
+    for ct in Clist:
+        store_handler = MysqlStore()
+        #store_handler.StoreLongShortRatio(ct, period=Quarter)

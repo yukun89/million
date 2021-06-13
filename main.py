@@ -7,6 +7,7 @@
 from forecast_model import *
 from ds import *
 from store import *
+from optable import *
 from hbapi import HuobiServices as api
 from util import *
 import threading
@@ -16,6 +17,9 @@ import mail
 import indicator
 import math
 from redis_cli import *
+import orm
+from orm import *
+from orm import Schema as schema
 
 #2017年11月1号为计算的起始点
 zero_start = 1509465600
@@ -33,8 +37,10 @@ class TimerLock:
     def is_locked(self):
         val = g_redis.get(self.key_)
         if val is not None:
-            log_debug("key %s is already saved"%self.key_)
+            log_debug("key %s is off"%self.key_)
             return True
+        else:
+            log_debug("key %s is on"%self.key_)
         return False
 
 class RedularTask:
@@ -43,26 +49,33 @@ class RedularTask:
         pass
 
 def store_ls_ratio():
-    #更新long short 信息
-    store_lock = TimerLock("store_ls_ratio", "val", 600)
+    #更新long short 信息: min一次
+    interval = 300
+    now = int(time.time())
+    now = int(now/interval)*interval
+    key = "store_ls_ratio_%d"%now
+    store_lock = TimerLock(key, "val", interval)
     if store_lock.is_locked() :
         return 0
-    store_handler = MysqlStore()
+    optable = OpTable()
     log_info("======== going to long short info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
     for ct in Clist:
-        store_handler.StoreLongShortRatio(ct)
+        optable.StoreLongShortRatio(ct, period=FMin)
     store_lock.lock()
 
 def store_price():
-    store_lock = TimerLock("store_price", "val", 1800)
+    interval = 600
+    store_lock = TimerLock("store_price", "val", interval)
     if store_lock.is_locked() :
         return 0
     store_handler = MysqlStore()
+    optable = OpTable()
     #更新基础价格信息
     log_info("======== going to update price info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
     for ct in Clist:
         for duration in Dlist:
             store_handler.StorePrice(ct, duration, True)
+            optable.StorePrice(ct, duration)
     store_lock.lock()
 
 def store_ma():
@@ -72,9 +85,11 @@ def store_ma():
     store_handler = MysqlStore()
     #更新ma信息
     log_info("======== going to update ma info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
+    optable = OpTable()
     for ct in Clist:
         for duration in Dlist:
             store_handler.StoreMa(ct, duration, True)
+            #optable.StoreMa(ct, duration, True)
     store_lock.lock()
 
 def store_boll():
@@ -84,9 +99,11 @@ def store_boll():
     store_handler = MysqlStore()
     #更新boll信息
     log_info("======== going to update boll info for currency_type=%s || Dlist=%s"%(Clist, Dlist))
+    optable = OpTable()
     for ct in Clist:
         for duration in Dlist:
             store_handler.StoreBoll(ct, duration)
+            #optable.StoreBoll(ct, duration)
     store_lock.lock()
 
 def store():
@@ -96,31 +113,135 @@ def store():
     store_boll()
     return 1
 
+def sync_ma_data():
+    #分别处理多个表
+   #获取新表中缺失的数据的最后一位
+   #提取老表中对应的数据
+   #将新表中的数据插入到老表之中
+   for currency_type in Clist:
+       for duration in Dlist:
+            data = orm.session.query(schema.MaInfo).filter(schema.MaInfo.currency_type==currency_type,
+                    schema.MaInfo.period==duration,
+                    ).order_by(schema.MaInfo.id.asc()).first()
+            orm.session.commit()
+            latest_ts = int(time.time())+ 3600
+            if data is not None:
+                latest_ts = data.id
+            else:
+                log_error("unexpected None data")
+                #exit()
+
+            lines = []
+            if duration==Hour:
+                lines = orm.session.query(schema.HourlyMa).filter(schema.HourlyMa.currency_type==currency_type, schema.HourlyMa.id < latest_ts).all()
+            if duration==Quarter:
+                lines = orm.session.query(schema.QuarterMa).filter(schema.QuarterMa.currency_type==currency_type, schema.QuarterMa.id < latest_ts).all()
+            if duration==Day:
+                lines = orm.session.query(schema.DailyMa).filter(schema.DailyMa.currency_type==currency_type, schema.DailyMa.id < latest_ts).all()
+            if duration==Week:
+                lines = orm.session.query(schema.WeeklyMa).filter(schema.WeeklyMa.currency_type==currency_type, schema.WeeklyMa.id < latest_ts).all()
+            batch = 100
+            for line in lines:
+                nw_data = schema.MaInfo(id=line.id,
+                        status=line.status,
+                        currency_type=line.currency_type,
+                        period=duration,
+                        close=line.close,
+                        delta=line.delta,
+                        price_date=line.price_date)
+                orm.session.add(nw_data)
+                batch += 1
+                if batch%100 == 0:
+                    orm.session.commit()
+            orm.session.commit()
+   return 0
+
+def sync_price_data():
+    #分别处理多个表
+   #获取新表中缺失的数据的最后一位
+   #提取老表中对应的数据
+   #将新表中的数据插入到老表之中
+   for currency_type in Clist:
+       for duration in Dlist:
+            data = orm.session.query(schema.PriceInfo).filter(schema.PriceInfo.currency_type==currency_type,
+                    schema.PriceInfo.period==duration,
+                    ).order_by(schema.PriceInfo.id.asc()).first()
+            orm.session.commit()
+            latest_ts = int(time.time())
+            if data is not None:
+                latest_ts = data.id
+            else:
+                log_error("unexpected None data")
+                exit()
+
+            lines = []
+            if duration==Hour:
+                lines = orm.session.query(schema.HourlyPrice).filter(schema.HourlyPrice.currency_type==currency_type, schema.HourlyPrice.id < latest_ts).all()
+            if duration==Quarter:
+                lines = orm.session.query(schema.QuarterPrice).filter(schema.QuarterPrice.currency_type==currency_type, schema.QuarterPrice.id < latest_ts).all()
+            if duration==Day:
+                lines = orm.session.query(schema.DailyPrice).filter(schema.DailyPrice.currency_type==currency_type, schema.DailyPrice.id < latest_ts).all()
+            if duration==Week:
+                lines = orm.session.query(schema.WeeklyPrice).filter(schema.WeeklyPrice.currency_type==currency_type, schema.WeeklyPrice.id < latest_ts).all()
+            batch = 100
+            for line in lines:
+                nw_data = schema.PriceInfo(id=line.id,
+                        status=line.status,
+                        currency_type=line.currency_type,
+                        period=duration,
+                        open=line.open,
+                        close=line.close,
+                        high=line.high,
+                        low=line.low,
+                        volume=line.amount,
+                        price_date=line.price_date)
+                orm.session.add(nw_data)
+                batch += 1
+                if batch%100 == 0:
+                    orm.session.commit()
+            orm.session.commit()
+   return 0
 
 def record():
-    recordLock = TimerLock("record", "val", 1800)
+    green_style="""<p><font color="green"> %s </font></p>"""
+    red_style="""<p><font color="red"> %s </font></p>"""
+    grey_style="""<p><font color="grey"> %s </font></p>"""
+    recordLock = TimerLock("record", "val", 3600)
     if recordLock.is_locked():
         return 0
     keydata = indicator.Indicator()
     now  = int(time.time())
     now_hour=int(math.floor(now/3600))*3600
     subject="ls_ratio_info"
-    content="*******Begin********\n"
+    content="<h2>*******Info********</h2>"
 
     #生成邮件内容
     valid_data = False
+    count = 0
+    special_count = 0
+    #for ct in watchedList:
     for ct in Clist:
-        lsRatio, diff, percent = keydata.long_short_ratio(ct)
-        item = "ct=%s||ratio=%.2f||diff=%.2f||percent=%.2f\n"%(ct, lsRatio, diff, percent)
-        if percent > 80 or percent < 20 or diff > 20 or diff < -20:
+        accountLsRatio, lsRatio, diff, pp_percent, percent = keydata.long_short_ratio(ct)
+        item = "ct=%s||accountLsr=%.2f||amountLsr=%.2f||lsr=%.2f||diff=%.2f||pp_percent=%.2f||percent=%.2f\n"%(ct, accountLsRatio, accountLsRatio*lsRatio, lsRatio, diff, pp_percent, percent)
+        count += 1
+        if accountLsRatio > 1.5:
             valid_data = True
-            content = content + "@@" + item
+            content = content + red_style%item
+            special_count += 1
+        elif percent > 75 or diff > 20:
+            valid_data = True
+            content = content + green_style%item
+        elif percent < 25 or diff < -20:
+            valid_data = True
+            content = content + red_style%item
         else:
-            content+=item
+            content = content + grey_style%item
+            count -= 1
 
-    content+="********End*******"
     if valid_data :
         subject = "Carefull:" + subject
+    else:
+        subject = "Omit:" + subject
     mail.SendEmail(subject, content)
     recordLock.lock()
     return
@@ -331,12 +452,13 @@ class Store (threading.Thread):
         while True:
             start_time = int(time.time())
             store()
-            interval = 300
+            interval = 60
             end_time = int(time.time())
             record()
             log_info("Store costs %d seconds, sleeping %d seconds for next round of store"%(end_time-start_time, interval))
             time.sleep(interval)
         pass
+
 
 assets = {}
 if __name__ == '__main__':
@@ -344,11 +466,18 @@ if __name__ == '__main__':
     parser.description='runing as get/online/forecast'
     parser.add_argument("-g","--get",      action="store", help="get data from web",      dest="get",      nargs="?", type=str)
     parser.add_argument("-f","--forecast", action="store", help="forecasting of offline", dest="forecast", nargs="?", type=str)
+    parser.add_argument("-o","--once", action="store", help="once ", dest="once", nargs="?", type=str)
     args = parser.parse_args()
 
     for ct in Clist:
         asset = Asset(ct, 10000.0)
         assets[ct] = asset
+
+    if args.once:
+        log_info("main is going to run as once")
+        #sync_price_data()
+        #sync_ma_data()
+        print(api.get_user_interest_info("currency_based", var.BSV))
 
     if args.get:
         log_info("main is going to run as get")

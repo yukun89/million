@@ -25,9 +25,14 @@ ADA="ada"
 LINK="link"
 BAND="band"
 UNI="uni"
+DOGE="doge"
+FIL="fil"
+DOT="dot"
+MATIC="matic"
 
 #Currency的List
-Clist = (BTC, EOS, OMG, DASH, HT, ETC, ETH, LTC, XRP, BCH, BSV, ADA, LINK, BAND, UNI)
+Clist = (BTC, EOS, OMG, DASH, HT, ETC, ETH, LTC, XRP, BCH, BSV, ADA, LINK, BAND, UNI, DOGE, FIL, DOT, MATIC)
+watchedList  = (BTC, EOS, FIL, BSV, BCH)
 
 Duration2ptable = {Hour: "hourly_price", Quarter: "quarter_price", Day: "daily_price", Week: "weekly_price"}
 Duration2ktable = {Hour: "hourly_ma", Quarter: "quarter_ma", Day: "daily_ma", Week: "weekly_ma"}

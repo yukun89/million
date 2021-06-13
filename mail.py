@@ -3,7 +3,7 @@
 import smtplib
 from email.mime.text import MIMEText
 
-def SendEmail(subject, content="content"):
+def SendEmail(subject, content="content", fmt="html"):
     #设置服务器所需信息
     #qq邮箱服务器地址
     mail_host = 'smtp.qq.com'
@@ -14,11 +14,11 @@ def SendEmail(subject, content="content"):
     #邮件发送方邮箱地址
     sender = '903204149@qq.com'
     #邮件接受方邮箱地址，注意需要[]包裹，这意味着你可以写多个邮件地址群发
-    receivers = ['huangyukun2012@163.com', 'hykhyy@qq.com']
+    receivers = ['huangyukun2012@163.com', 'hykhyy@qq.com', 'yxsunrise@126.com']
 
     #设置email信息
     #邮件内容设置
-    message = MIMEText(content,'plain','utf-8')
+    message = MIMEText(content, fmt,'utf-8')
     #邮件主题
     message['Subject'] = subject
     #发送方信息
