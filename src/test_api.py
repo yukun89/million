@@ -4,7 +4,6 @@
 # Date              : 02.06.2019
 # Last Modified Date: 02.06.2019
 from hbapi import HuobiServices as api
-from hbapi import BybtService as bybt
 from hlog import *
 from fetch import *
 from indicator import *
@@ -440,21 +439,22 @@ if __name__ == '__main__':
     # print(Get_supported_contract())
     # print(Get_contract_price('xrp', 'next_week'))
     #get_raw_price_data()
-    # print(bybt.get_account_long_short_ratio(symbol= 'xrp', timeType= 2))
     #print("API result:", get_current_long_short_info())
     #print("create order")
     #print("get order info")
     #print(get_order_info("35600450334"))
     #print(get_order_info("35600450334"))
-    # print("API result:", bybt.get_amount_long_short_ratio(symbol= 'xrp', timeType= 3))
     # print("API result:", get_interest_amount_volume(BTC))
     monitor = Indicator()
+    print("volume", api.get_interest_volume('dued', BTC, period='60min', size=48))
+    print("volume", api.get_interest_volume('currency_based', BTC, period='60min', size=48))
 
     for ct in Clist:
         for i in range(0, 28):
             now = int(time.time())
-            monitor.long_short_ratio(ct, now - i*3600*4)
+            #monitor.long_short_ratio(ct, now - i*3600*4)
             pass
     for ct in Clist:
-        store_handler = MysqlStore()
+        #store_handler = MysqlStore()
         #store_handler.StoreLongShortRatio(ct, period=Quarter)
+        pass

@@ -8,7 +8,7 @@ stop(){
 }
 
 start() {
-    python3 main.py -g1&
+    python3 src/main.py -g1&
 }
 
 case "$1" in

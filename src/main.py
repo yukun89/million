@@ -9,14 +9,14 @@ from ds import *
 from store import *
 from optable import *
 from hbapi import HuobiServices as api
-from util import *
+from util.convert import *
 import threading
 import time
 import argparse
-import mail
+from iowapper import email
+from iowapper.redis_cli import *
 import indicator
 import math
-from redis_cli import *
 import orm
 from orm import *
 from orm import Schema as schema
@@ -217,32 +217,28 @@ def record():
 
     #生成邮件内容
     valid_data = False
-    count = 0
-    special_count = 0
     #for ct in watchedList:
     for ct in Clist:
         accountLsRatio, lsRatio, diff, pp_percent, percent = keydata.long_short_ratio(ct)
-        item = "ct=%s||accountLsr=%.2f||amountLsr=%.2f||lsr=%.2f||diff=%.2f||pp_percent=%.2f||percent=%.2f\n"%(ct, accountLsRatio, accountLsRatio*lsRatio, lsRatio, diff, pp_percent, percent)
-        count += 1
+        amountLsRatio = accountLsRatio * lsRatio
+        item = "ct=%s||accountLsr=%.2f||amountLsr=%.2f||lsr=%.2f||diff=%.2f||pp_percent=%.2f||percent=%.2f\n"%(ct, accountLsRatio, amountLsRatio, lsRatio, diff, pp_percent, percent)
         if accountLsRatio > 1.5:
-            valid_data = True
             content = content + red_style%item
-            special_count += 1
-        elif percent > 75 or diff > 20:
-            valid_data = True
+        elif percent > 80 or diff > 20:
             content = content + green_style%item
-        elif percent < 25 or diff < -20:
-            valid_data = True
+        elif percent < 20 or diff < -20:
             content = content + red_style%item
-        else:
-            content = content + grey_style%item
-            count -= 1
+        elif amountLsRatio > 0.9 and diff > 3:
+            content = content + green_style%item
+        elif amountLsRatio < 0.9 and diff < -3:
+            content = content + red_style%item
+            pass
 
     if valid_data :
         subject = "Carefull:" + subject
     else:
         subject = "Omit:" + subject
-    mail.SendEmail(subject, content)
+    email.SendEmail(subject, content)
     recordLock.lock()
     return
 

@@ -10,7 +10,7 @@ from .Utils import *
 '''
 Market data API
 '''
-##############contact begin ##############
+##############contract begin ##############
 DEBUG = 1
 #https://api.hbdm.com/api/v1/contract_contract_info
 valid_currency_type = {'btc', 'xrp'}
@@ -51,7 +51,7 @@ https://api.hbdm.com/api/v1/contract_price_limit?symbol=BTC&contract_type=next_w
     params = {}
     return http_get_request(full_url, params)
 
-##############contact end   ##############
+##############contract end   ##############
 
 # 获取KLine
 def get_kline(symbol, period, size=150):
@@ -530,7 +530,7 @@ def margin_balance(symbol):
 #usdt 合约
 #curl "https://api.hbdm.com/linear-swap-api/v1/swap_elite_account_ratio?contract_code=BTC-USDT&period=60min"
 
-#币本位合约
+# 获取躲避比信息
 def get_long_short_ratio(contract_type, ls_type, symbol, period):
     urls={"dued_account_url":"/api/v1/contract_elite_account_ratio",
             "dued_amount_url":"/api/v1/contract_elite_position_ratio",
@@ -550,6 +550,8 @@ def get_long_short_ratio(contract_type, ls_type, symbol, period):
 
     full_url = HBDM_URL + url
     return http_get_request(full_url, params)
+
+
 """
 {
     "status": "ok",
@@ -568,7 +570,8 @@ def get_long_short_ratio(contract_type, ls_type, symbol, period):
     "ts": 1603695899986
 }
 """
-def get_interest_volume(contract_type, symbol, period, size=48):
+#获取持仓量信息
+def get_interest_volume(contract_type, symbol, period='60min', size=48):
     urls={"usdt":"/linear-swap-api/v1/swap_his_open_interest",
             "dued":"/api/v1/contract_his_open_interest",
             "currency_based":"/swap-api/v1/swap_his_open_interest"}
@@ -576,10 +579,16 @@ def get_interest_volume(contract_type, symbol, period, size=48):
     swap_type="USDT"
     if contract_type=="currency_based":
         swap_type="USD"
+
     params["contract_code"]="%s-%s"%(symbol,swap_type)
     params["period"] = period
     params["amount_type"] = 2#1 张；2币
-    
+    params["size"] = size
+    params["symbol"] = symbol
+
+    url = urls[contract_type]
+    full_url = HBDM_URL + url
+
     return http_get_request(full_url, params)
 
 def get_user_asset_info(contract_type, symbol):

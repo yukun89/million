@@ -3,10 +3,10 @@
 # File              : mmonitor.py
 
 import time
-import util
+from util.convert import *
 from var import *
 import store
-from redis_cli import *
+from iowapper.redis_cli import *
 from hlog import *
 import orm
 from orm import *
@@ -47,9 +47,9 @@ class Indicator():
             thisAccountRatio = orm.get_account_lsr(lsRatioList[0])
             thisAmountRatio = orm.get_amount_lsr(lsRatioList[0])
             thisRatio = orm.get_lsr(lsRatioList[0])
-            history5 = list(map(lambda x:orm.get_lsr(x), lsRatioList[1:6]))
-            ma5 = sum(history5)/len(history5)
-            diff = (thisRatio/ma5 - 1) * 100
+            history10 = list(map(lambda x:orm.get_lsr(x), lsRatioList[0:10]))
+            ma10 = sum(history10)/len(history10)
+            diff = (thisRatio/ma10 - 1) * 100
 
             bigger = 0
             smaller = 0
@@ -73,7 +73,7 @@ class Indicator():
             percents.append(percent)
             pp_percents.append(pp_percent)
             size = len(lsRatioList)
-            log_debug("Indicator lsr-single: ct=%s || dt=%s || LsRatio(1.0)=%.2f || diff(100)=%.2f || pp_percent(100)=%.2f || percent = %.2f|| contract_type=%s || lsr_size=%d"%(currency_type, util.timestamp2string(now), thisRatio, diff, pp_percent, percent, contract_type, size))
+            log_debug("Indicator lsr-single: ct=%s || dt=%s || LsRatio(1.0)=%.2f || diff(100)=%.2f || pp_percent(100)=%.2f || percent = %.2f|| contract_type=%s || lsr_size=%d"%(currency_type, timestamp2string(now), thisRatio, diff, pp_percent, percent, contract_type, size))
 
         if len(ratios) == 0:
             log_warn("empty data for ls ration: ct=%s"%currency_type)
@@ -86,6 +86,6 @@ class Indicator():
         diff= sum(diffs)/len(diffs)
         percent = sum(percents)/len(percents)
         pp_percent = sum(pp_percents)/len(pp_percents)
-        log_debug("Indicator lsr-total: ct=%s || dt=%s || LsRatio(1.0)=%.2f || diff(100)=%.2f || pp_percent = %.2f || percent(100)=%.2f"%(currency_type, util.timestamp2string(now), ratio, diff, pp_percent, percent))
+        log_debug("Indicator lsr-total: ct=%s || dt=%s || LsRatio(1.0)=%.2f || diff(100)=%.2f || pp_percent = %.2f || percent(100)=%.2f"%(currency_type, timestamp2string(now), ratio, diff, pp_percent, percent))
         return account_ratio, ratio, diff, pp_percent, percent
 

@@ -1,6 +1,6 @@
 from hlog import *
 from  var import *
-from util import *
+from util.convert import *
 
 class Order:
     #switch = -1: buy, switch = 1: sell
@@ -94,6 +94,11 @@ class BuySellRatio:
         #0, 1, 2 交割合约；币本位永续合约；usdt永续合约
         self.ls_type_ = "amount"
 
+class TradeInfo:
+    def __init__(self, currency_type):
+        self.id_ = int(0)
+        self.currency_type_ = currency_type
+        self.volume_ = float(0.0)
 
 class Price:
     def __init__(self, currency_type):
