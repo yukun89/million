@@ -208,6 +208,57 @@ class OpTable:
         orm.session.commit()
         return latestLsRatioLines
 
+    def StoreInterestVolume(self, currency_type, size=48, period=var.Hour, refresh=False):
+        if size > 200:
+            size = 200
+        align_seconds = var.Duration2second[period]
+        ago = int(time.time()) - size * align_seconds
+        min_volume = 0 #默认
+        if refresh :
+            min_volume = 1000000000
+        for contract_type in var.ContractTypes:
+            if contract_type == 'dued':
+                continue
+
+            #step1. 获取db中，存在多空比，但是不存在volume的记录
+            latestLsRatioLines = orm.session.query(schema.LongShortRatio).filter(schema.LongShortRatio.market=='Huobi',
+                    schema.LongShortRatio.contract_type==contract_type,
+                    schema.LongShortRatio.currency_type==currency_type,
+                    (schema.LongShortRatio.id+8*3600)%align_seconds==0,
+                    schema.LongShortRatio.id >= ago,
+                    schema.LongShortRatio.amount_volume < min_volume).order_by(schema.LongShortRatio.id.desc()).limit(2000).all()
+            orm.session.commit()
+            to_update_cnt = len(latestLsRatioLines)
+            if to_update_cnt != 0:
+                log_info("going to store long short ratio. currency_type=%s || contract_type=%s || to_update_cnt=%d"%(currency_type, contract_type, to_update_cnt))
+            else:
+                log_info("no need to update lsr volume . currency_type=%s || contract_type=%s || to_update_cnt=%d"%(currency_type, contract_type, to_update_cnt))
+                continue
+            id_volumes = {}
+            for each in latestLsRatioLines:
+                id_volumes[each.id] = each.amount_volume
+
+            #step2. 从web上获取对应的volume信息
+            tradeInfoList = GetInterestVolume(contract_type, currency_type, size, period)
+            #step3. update对应的db存储
+            update_count = 0
+            for tradeInfo in tradeInfoList:
+                if tradeInfo.id_ in id_volumes and int(tradeInfo.volume_) != int(id_volumes[tradeInfo.id_]):
+                    update_count += 1
+                    orm.session.query(schema.LongShortRatio).filter(schema.LongShortRatio.market=='Huobi',
+                            schema.LongShortRatio.contract_type==contract_type,
+                            schema.LongShortRatio.currency_type==currency_type,
+                            schema.LongShortRatio.id == tradeInfo.id_).update({"amount_volume":tradeInfo.volume_})
+
+            orm.session.commit()
+            if update_count != 0 :
+                log_info("lsr update volume for currency_type=%s: %d records success"%(currency_type, update_count))
+            else:
+                log_info("lsr update volume for currency_type=%s: %d records success"%(currency_type, update_count))
+
+
+
+
     def StoreLongShortRatio(self, currency_type, period=Hour):
         log_info("going to store long short ratio. currency_type=%s || period=%s"%(currency_type, period))
         align_seconds = var.Duration2second[period]

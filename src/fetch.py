@@ -31,6 +31,9 @@ def GetCurrentLongShortRatio(currency_type=BTC, duration=Hour, exName='Huobi'):
 def GetLongShortRatio(contract_type, ls_type, currency_type, period=Hour):
     return get_long_short_ratio(contract_type, ls_type, currency_type, period)
 
+def GetInterestVolume(contract_type, currency_type, length, period):
+    return get_interest_volume(contract_type, currency_type, length, period)
+
 #output: float
 def GetCurrentPrice(currency_type):
     price_list = get_current_kline(currency_type, "usdt", "1min", 1)
@@ -74,7 +77,7 @@ def get_long_short_ratio(contract_type, ls_type, currency_type, period="60min"):
 
 #{'status': 'ok', 'data': {'symbol': 'BTC', 'tick': [{'volume': 7923.030839231547, 'amount_type': 2, 'ts': 1623657600000}, {'volume': 7937.367931491199, 'amount_type': 2, 'ts': 1623654000000}, {'volume': 7969.345135261478, 'amount_type': 2, 'ts': 1623650400000}, {'volume': 7957.421153581986, 'amount_type': 2, 'ts': 1623646800000}, {'volume': 8026.149411272458, 'amount_type': 2, 'ts': 1623643200000}, {'volume': 7969.546314819047, 'amount_type': 2, 'ts': 1623639600000}, {'volume': 7851.254320294865, 'amount_type': 2, 'ts': 1623636000000}, {'volume': 7946.295159144407, 'amount_type': 2, 'ts': 1623632400000}, {'volume': 7873.162419443697, 'amount_type': 2, 'ts': 1623628800000}, {'volume': 7914.976116741984, 'amount_type': 2, 'ts': 1623625200000}, {'volume': 7987.491191885733, 'amount_type': 2, 'ts': 1623621600000}, {'volume': 7859.054012660813, 'amount_type': 2, 'ts': 1623618000000}, {'volume': 8210.305444887119, 'amount_type': 2, 'ts': 1623614400000}, {'volume': 8235.683148852515, 'amount_type': 2, 'ts': 1623610800000}, {'volume': 8168.026424265784, 'amount_type': 2, 'ts': 1623607200000}, {'volume': 8274.651084853136, 'amount_type': 2, 'ts': 1623603600000}, {'volume': 8334.840398220387, 'amount_type': 2, 'ts': 1623600000000}, {'volume': 8363.459351944195, 'amount_type': 2, 'ts': 1623596400000}, {'volume': 8346.987945095592, 'amount_type': 2, 'ts': 1623592800000}, {'volume': 8370.338037596921, 'amount_type': 2, 'ts': 1623589200000}, {'volume': 8425.681794749617, 'amount_type': 2, 'ts': 1623585600000}, {'volume': 8422.311155577789, 'amount_type': 2, 'ts': 1623582000000}, {'volume': 8368.962955100307, 'amount_type': 2, 'ts': 1623578400000}, {'volume': 8470.50090260321, 'amount_type': 2, 'ts': 1623574800000}, {'volume': 8514.216457580267, 'amount_type': 2, 'ts': 1623571200000}, {'volume': 8563.671388101982, 'amount_type': 2, 'ts': 1623567600000}, {'volume': 8678.228386945226, 'amount_type': 2, 'ts': 1623564000000}, {'volume': 8675.439570608922, 'amount_type': 2, 'ts': 1623560400000}, {'volume': 8602.556163346751, 'amount_type': 2, 'ts': 1623556800000}, {'volume': 8400.206702585476, 'amount_type': 2, 'ts': 1623553200000}, {'volume': 8369.030378623629, 'amount_type': 2, 'ts': 1623549600000}, {'volume': 8330.215642601555, 'amount_type': 2, 'ts': 1623546000000}, {'volume': 8381.74452462337, 'amount_type': 2, 'ts': 1623542400000}, {'volume': 8441.548375543187, 'amount_type': 2, 'ts': 1623538800000}, {'volume': 8443.966502561929, 'amount_type': 2, 'ts': 1623535200000}, {'volume': 8469.12784674057, 'amount_type': 2, 'ts': 1623531600000}, {'volume': 8408.839593687282, 'amount_type': 2, 'ts': 1623528000000}, {'volume': 8400.505251664907, 'amount_type': 2, 'ts': 1623524400000}, {'volume': 8425.400460228322, 'amount_type': 2, 'ts': 1623520800000}, {'volume': 8473.926772824794, 'amount_type': 2, 'ts': 1623517200000}, {'volume': 8428.089420900482, 'amount_type': 2, 'ts': 1623513600000}, {'volume': 8388.417624209904, 'amount_type': 2, 'ts': 1623510000000}, {'volume': 8364.442825847633, 'amount_type': 2, 'ts': 1623506400000}, {'volume': 8426.474790603732, 'amount_type': 2, 'ts': 1623502800000}, {'volume': 8613.261751613683, 'amount_type': 2, 'ts': 1623499200000}, {'volume': 8715.800130688527, 'amount_type': 2, 'ts': 1623495600000}, {'volume': 8735.125364630036, 'amount_type': 2, 'ts': 1623492000000}, {'volume': 8715.430935756769, 'amount_type': 2, 'ts': 1623488400000}], 'contract_code': 'BTC-USD'}, 'ts': 1623659709782}
 
-def get_interest_volume(contract_type, currency_type, period='60min'):
+def get_interest_volume(contract_type, currency_type, size, period):
     #contract_type: dued, currency_based, usdt
     result = []
     contract_types = {"dued", "currency_based", "usdt"}
@@ -84,16 +87,16 @@ def get_interest_volume(contract_type, currency_type, period='60min'):
 
     resp = {}
     try:
-        resp = huobi.get_interest_volume(contract_type, currency_type, period)
+        resp = huobi.get_interest_volume(contract_type, currency_type, size, period)
     except Exception as e:
         log_error("Failed to get interest volume for currency_type=%s. exception:%s"%(currency_type, e))
-    else:
-        log_debug("success get interest volume for currency_type=%s"%currency_type)
     if not resp or resp["status"] != "ok" or not resp["data"]:
         if resp:
-            log_error("http resp not ok for currency_type=%s||period=%s||resp=%s"%(currency_type, period, resp))
+            log_error("http resp not ok for currency_type=%s||resp=%s"%(currency_type, resp))
         return result
     data_list = resp["data"]["tick"]
+    if len(data_list) >= 0:
+        log_debug("success get interest volume for currency_type=%s||from=%s||to=%s||data[0]=%s||data[-1]=%s"%(currency_type, timestamp2string(data_list[0]['ts']/1000), timestamp2string(data_list[-1]['ts']/1000), data_list[0], data_list[-1]))
     for line in data_list:
         info = TradeInfo(currency_type)
         info.id_ = int(int(line["ts"])/1000)

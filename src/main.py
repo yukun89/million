@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# File              : main.py
-# Date              : 29.12.2020
-# Last Modified Date: 29.12.2020
 
 from forecast_model import *
 from ds import *
@@ -43,17 +40,11 @@ class TimerLock:
             log_debug("key %s is on"%self.key_)
         return False
 
-class RedularTask:
-    def __init__(self, interval=600):
-        self.interval_ = interval
-        pass
-
 def store_ls_ratio():
     #更新long short 信息: min一次
     interval = 300
     now = int(time.time())
-    now = int(now/interval)*interval
-    key = "store_ls_ratio_%d"%now
+    key = "store_ls_ratio_%d"%(int(now/interval)*interval)
     store_lock = TimerLock(key, "val", interval)
     if store_lock.is_locked() :
         return 0
@@ -62,6 +53,24 @@ def store_ls_ratio():
     for ct in Clist:
         optable.StoreLongShortRatio(ct, period=FMin)
     store_lock.lock()
+
+def store_interest_volume():
+    #更新long short 信息: min一次
+    interval = 1200
+    now = int(time.time())
+    if now%3600 < 600:
+        return
+    key = "store_interest_volume_%d"%(int(now/interval)*interval)
+    store_lock = TimerLock(key, "val", interval)
+    if store_lock.is_locked() :
+        return 0
+    optable = OpTable()
+    log_info("======== going to store interest volume for currency_type=%s || Dlist=%s"%(Clist, Dlist))
+    for ct in Clist:
+        trueFalse = (now/3600%4 == 0)
+        optable.StoreInterestVolume(ct, 48, var.Hour, trueFalse)
+    store_lock.lock()
+
 
 def store_price():
     interval = 600
@@ -108,6 +117,7 @@ def store_boll():
 
 def store():
     store_ls_ratio()
+    store_interest_volume()
     store_price()
     store_ma()
     store_boll()
@@ -473,7 +483,13 @@ if __name__ == '__main__':
         log_info("main is going to run as once")
         #sync_price_data()
         #sync_ma_data()
-        print(api.get_user_interest_info("currency_based", var.BSV))
+        # print(api.get_user_interest_info("currency_based", var.BSV))
+        optable = OpTable()
+        # optable.StoreInterestVolume(var.LTC, 20, var.Hour, True)
+        for ct in Clist:
+            optable.StoreInterestVolume(ct, 48, var.Hour, True)
+            pass
+
 
     if args.get:
         log_info("main is going to run as get")

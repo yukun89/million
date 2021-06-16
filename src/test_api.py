@@ -446,8 +446,8 @@ if __name__ == '__main__':
     #print(get_order_info("35600450334"))
     # print("API result:", get_interest_amount_volume(BTC))
     monitor = Indicator()
-    print("volume", api.get_interest_volume('dued', BTC, period='60min', size=48))
-    print("volume", api.get_interest_volume('currency_based', BTC, period='60min', size=48))
+    # print("volume", api.get_interest_volume('dued', BTC, period='60min', size=48))
+    print("volume", api.get_interest_volume('usdt', BTC, period='60min', size=48))
 
     for ct in Clist:
         for i in range(0, 28):

@@ -571,7 +571,9 @@ def get_long_short_ratio(contract_type, ls_type, symbol, period):
 }
 """
 #获取持仓量信息
-def get_interest_volume(contract_type, symbol, period='60min', size=48):
+def get_interest_volume(contract_type, symbol, size=48, period='60min'):
+    if size > 200:
+        size = 200
     urls={"usdt":"/linear-swap-api/v1/swap_his_open_interest",
             "dued":"/api/v1/contract_his_open_interest",
             "currency_based":"/swap-api/v1/swap_his_open_interest"}
