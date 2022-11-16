@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from hbapi.Utils import *
+from utils import *
 
 DEBUG = 0
 # 获取人数多空比
@@ -60,3 +60,8 @@ def get_amount_volume(symbol):
     if DEBUG == 1:
         print("DEBUG get_amount_long_short_ratio: url=%s || params=%s"%(url, params))
     return http_get_request(url, params)
+
+if __name__ == "main":
+    get_account_long_short_ratio('BTC', timeType=2, exName='Huobi')
+    get_amount_long_short_ratio('BTC', timeType=2, exName='Huobi')
+    get_amount_volume('BTC')

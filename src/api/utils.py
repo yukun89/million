@@ -38,9 +38,8 @@ def http_get_request(url, params, add_to_headers=None):
     if add_to_headers:
         headers.update(add_to_headers)
     postdata = urllib.parse.urlencode(params)
-    response = requests.get(url, postdata, headers=headers, timeout=5) 
+    response = requests.get(url, postdata, headers=headers, timeout=5)
     try:
-        
         if response.status_code == 200:
             return response.json()
         else:
@@ -60,7 +59,6 @@ def http_post_request(url, params, add_to_headers=None):
     postdata = json.dumps(params)
     response = requests.post(url, postdata, headers=headers, timeout=10)
     try:
-        
         if response.status_code == 200:
             return response.json()
         else:
