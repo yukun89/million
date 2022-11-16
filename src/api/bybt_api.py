@@ -61,7 +61,8 @@ def get_amount_volume(symbol):
         print("DEBUG get_amount_long_short_ratio: url=%s || params=%s"%(url, params))
     return http_get_request(url, params)
 
-if __name__ == "main":
-    get_account_long_short_ratio('BTC', timeType=2, exName='Huobi')
-    get_amount_long_short_ratio('BTC', timeType=2, exName='Huobi')
-    get_amount_volume('BTC')
+if __name__ == '__main__':
+    DEBUG=1
+    print(get_account_long_short_ratio('BTC', timeType=2, exName='Huobi'))
+    print(get_amount_long_short_ratio('BTC', timeType=2, exName='Huobi'))
+    print(get_amount_volume('BTC'))
