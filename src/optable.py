@@ -15,8 +15,6 @@ import copy
 import var
 
 
-#def getLatestIdOfPrice(currency_type, duration, table, delta = 0, only_active=True):
-
 
 #对mysql中的业务数据进行读写:主要是Get/Store方法
 class OpTable:
@@ -391,12 +389,4 @@ class OpTable:
                 orm.session.add(price_info)
         orm.session.commit()
         log_info("UpdatePrice end: add_num=%d || update_num=%d || currency_type=%s || period=%s " % (add_num, update_num, currency_type, period))
-
-
         return
-    def Migration():
-        #get
-        #latestline = orm.session.query(schema.Dail)..all()
-        #insert
-        pass
-        #insert

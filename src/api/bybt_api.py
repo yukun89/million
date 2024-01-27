@@ -4,10 +4,11 @@
 from utils import *
 
 DEBUG = 0
+
+BYBT_URL="http://fapi.bybt.com"
+
 # 获取人数多空比
 # https://fapi.bybt.com/api/tradingData/accountLSRatio?exName=Huobi&symbol=XRP&type=0&timeType=3
-
-BYBT_URL="https://fapi.bybt.com"
 def get_account_long_short_ratio(symbol, timeType=2, exName='Huobi'):
     """
     :param symbol
@@ -30,6 +31,7 @@ def get_account_long_short_ratio(symbol, timeType=2, exName='Huobi'):
         print("DEBUG get_account_long_short_ratio: url=%s || params=%s"%(url, params))
     return http_get_request(url, params)
 
+# 获取大户持仓多空比
 def get_amount_long_short_ratio(symbol, timeType=2, exName='Huobi'):
     """
     :param symbol
@@ -63,6 +65,6 @@ def get_amount_volume(symbol):
 
 if __name__ == '__main__':
     DEBUG=1
-    print(get_account_long_short_ratio('BTC', timeType=2, exName='Huobi'))
+    print(get_account_long_short_ratio('BTC', timeType=2, exName='Binance'))
     print(get_amount_long_short_ratio('BTC', timeType=2, exName='Huobi'))
     print(get_amount_volume('BTC'))

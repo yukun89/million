@@ -30,7 +30,9 @@ ACCOUNT_ID = 177232#TODO
 
 #'Timestamp': '2017-06-02T06:13:49'
 
-def http_get_request(url, params, add_to_headers=None):
+def http_get_request(url, params, add_to_headers=None, debug=False):
+    if debug:
+        print("http_get_request url=%s || params=%s"%(url, params))
     headers = {
         "Content-type": "application/x-www-form-urlencoded",
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36',
@@ -38,7 +40,7 @@ def http_get_request(url, params, add_to_headers=None):
     if add_to_headers:
         headers.update(add_to_headers)
     postdata = urllib.parse.urlencode(params)
-    response = requests.get(url, postdata, headers=headers, timeout=5)
+    response = requests.get(url, postdata, headers=headers, timeout=5, verify=False)
     try:
         if response.status_code == 200:
             return response.json()

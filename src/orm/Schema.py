@@ -1,162 +1,87 @@
 # coding: utf-8
-from sqlalchemy import CHAR, Column, DECIMAL, DateTime, Enum, text
-from sqlalchemy.dialects.mysql import INTEGER
+from sqlalchemy import CHAR, Column, DECIMAL, DateTime, Float, text
+from sqlalchemy.dialects.mysql import ENUM, INTEGER
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 metadata = Base.metadata
 
 
-class Boll(Base):
-    __tablename__ = 'boll'
+class BitfinexInfo(Base):
+    __tablename__ = 'bitfinex_info'
 
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    duration = Column(CHAR(10), primary_key=True, nullable=False)
-    price_date = Column(DateTime, primary_key=True, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
-    mid = Column(DECIMAL(20, 8))
-    upper = Column(DECIMAL(20, 8))
-    lower = Column(DECIMAL(20, 8))
+    ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='时间戳')
+    symbol = Column(CHAR(10, 'utf8_bin'), primary_key=True, nullable=False)
+    mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    long_volume = Column(DECIMAL(20, 8), comment='long')
+    short_volume = Column(DECIMAL(20, 8), comment='short')
+    long_ratio = Column(DECIMAL(20, 8), comment='多单占比')
 
 
-class DailyMa(Base):
-    __tablename__ = 'daily_ma'
+class BlockInfo(Base):
+    __tablename__ = 'block_info'
 
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    close = Column(DECIMAL(20, 8))
-    delta = Column(INTEGER(11), primary_key=True, nullable=False)
-    price_date = Column(DateTime, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class DailyPrice(Base):
-    __tablename__ = 'daily_price'
-
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    open = Column(DECIMAL(20, 8))
-    high = Column(DECIMAL(20, 8))
-    low = Column(DECIMAL(20, 8))
-    close = Column(DECIMAL(20, 8))
-    amount = Column(DECIMAL(20, 8))
-    price_date = Column(DateTime, primary_key=True, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
+    ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='时间戳')
+    mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    symbol = Column(CHAR(10, 'utf8_bin'), primary_key=True, nullable=False)
+    transactions = Column(DECIMAL(20, 4))
+    active_addresss = Column(DECIMAL(20, 4))
+    new_address = Column(DECIMAL(20, 4))
+    adjusten_on_chain_volume = Column(DECIMAL(20, 4))
+    miner_revenue = Column(DECIMAL(20, 4))
+    addresss_with_balance_over_x = Column(DECIMAL(20, 4))
 
 
-class HourlyMa(Base):
-    __tablename__ = 'hourly_ma'
+class CmeInfo(Base):
+    __tablename__ = 'cme_info'
 
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    close = Column(DECIMAL(20, 8))
-    delta = Column(INTEGER(11), primary_key=True, nullable=False)
-    price_date = Column(DateTime, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class HourlyPrice(Base):
-    __tablename__ = 'hourly_price'
-
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    open = Column(DECIMAL(20, 8))
-    high = Column(DECIMAL(20, 8))
-    low = Column(DECIMAL(20, 8))
-    close = Column(DECIMAL(20, 8))
-    amount = Column(DECIMAL(20, 8))
-    price_date = Column(DateTime, primary_key=True, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
+    ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='时间戳')
+    mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    symbol = Column(CHAR(10, 'utf8_bin'), primary_key=True, nullable=False)
+    big_user_long_units = Column(DECIMAL(20, 4))
+    big_user_short_units = Column(DECIMAL(20, 4))
+    small_user_long_units = Column(DECIMAL(20, 4))
+    small_user_short_units = Column(DECIMAL(20, 4))
+    fund_user_long_units = Column(DECIMAL(20, 4))
+    fund_user_short_units = Column(DECIMAL(20, 4))
 
 
-class LongShortRatio(Base):
-    __tablename__ = 'long_short_ratio'
+class DailyGreedyIndex(Base):
+    __tablename__ = 'daily_greedy_index'
 
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    market = Column(CHAR(10), primary_key=True, nullable=False)
-    price_date = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
-    amount_volume = Column(DECIMAL(20, 8), server_default=text("-1.00000000"))
-    amount_buy_ratio = Column(DECIMAL(20, 8), server_default=text("-1.00000000"))
-    amount_sell_ratio = Column(DECIMAL(20, 8), server_default=text("-1.00000000"))
-    account_buy_ratio = Column(DECIMAL(20, 8), server_default=text("-1.00000000"))
-    account_sell_ratio = Column(DECIMAL(20, 8), server_default=text("-1.00000000"))
-    contract_type = Column(Enum('dued', 'currency_based', 'usdt'), primary_key=True, nullable=False, server_default=text("'usdt'"))
+    ts = Column(INTEGER(11), primary_key=True, comment='时间戳')
+    mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    greedy_index = Column(INTEGER(10), server_default=text("50"))
 
 
-class MaInfo(Base):
-    __tablename__ = 'ma_info'
+class ExchangeInfo(Base):
+    __tablename__ = 'exchange_info'
+    __table_args__ = {'comment': '交易所相关信息：合约'}
 
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    period = Column(CHAR(20), primary_key=True, nullable=False, server_default=text("'60min'"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    close = Column(DECIMAL(20, 8))
-    delta = Column(INTEGER(11), primary_key=True, nullable=False)
-    price_date = Column(DateTime, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class PriceInfo(Base):
-    __tablename__ = 'price_info'
-
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    period = Column(CHAR(20), primary_key=True, nullable=False, server_default=text("'60min'"))
-    open = Column(DECIMAL(20, 8))
-    high = Column(DECIMAL(20, 8))
-    low = Column(DECIMAL(20, 8))
-    close = Column(DECIMAL(20, 8))
-    volume = Column(DECIMAL(20, 8))
-    price_date = Column(DateTime, primary_key=True, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
+    ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='时间戳')
+    symbol = Column(CHAR(10, 'utf8_bin'), primary_key=True, nullable=False)
+    mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    exchange_name = Column(CHAR(20, 'utf8_bin'), primary_key=True, nullable=False, server_default=text("''"), comment='交易所名称')
+    open_interest = Column(DECIMAL(20, 2), comment='合约持仓')
+    user_long_ratio = Column(Float, nullable=False, server_default=text("0.5"))
+    user_short_ratio = Column(Float, nullable=False, server_default=text("0.5"))
+    amount_long_ratio = Column(Float, nullable=False, server_default=text("0.5"))
+    amount_short_ratio = Column(Float, nullable=False, server_default=text("0.5"))
+    fee_rate = Column(DECIMAL(20, 8), nullable=False, server_default=text("0.00000000"), comment='资金费率')
+    boom_amont = Column(DECIMAL(20, 2), nullable=False, server_default=text("0.00"), comment='爆仓数据')
 
 
-class QuarterMa(Base):
-    __tablename__ = 'quarter_ma'
+class Kline(Base):
+    __tablename__ = 'kline'
 
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    close = Column(DECIMAL(20, 8))
-    delta = Column(INTEGER(11), primary_key=True, nullable=False)
-    price_date = Column(DateTime, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class QuarterPrice(Base):
-    __tablename__ = 'quarter_price'
-
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    open = Column(DECIMAL(20, 8))
-    high = Column(DECIMAL(20, 8))
-    low = Column(DECIMAL(20, 8))
-    close = Column(DECIMAL(20, 8))
-    amount = Column(DECIMAL(20, 8))
-    price_date = Column(DateTime, primary_key=True, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class WeeklyMa(Base):
-    __tablename__ = 'weekly_ma'
-
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    close = Column(DECIMAL(20, 8))
-    delta = Column(INTEGER(11), primary_key=True, nullable=False)
-    price_date = Column(DateTime, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
-
-
-class WeeklyPrice(Base):
-    __tablename__ = 'weekly_price'
-
-    id = Column(INTEGER(11), primary_key=True, nullable=False)
-    status = Column(INTEGER(11), nullable=False, server_default=text("0"))
-    currency_type = Column(CHAR(10), primary_key=True, nullable=False)
-    open = Column(DECIMAL(20, 8))
-    high = Column(DECIMAL(20, 8))
-    low = Column(DECIMAL(20, 8))
-    close = Column(DECIMAL(20, 8))
-    amount = Column(DECIMAL(20, 8))
-    price_date = Column(DateTime, primary_key=True, nullable=False, index=True, server_default=text("'0000-00-00 00:00:00'"))
+    ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='时间戳')
+    symbol = Column(CHAR(10, 'utf8_bin'), primary_key=True, nullable=False)
+    trade_type = Column(CHAR(20, 'utf8_bin'), primary_key=True, nullable=False, server_default=text("''"), comment='现货/U合约/B合约')
+    mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    duration = Column(ENUM('min', 'hour', 'day', 'week'), primary_key=True, nullable=False)
+    o_price = Column(DECIMAL(20, 8))
+    h_price = Column(DECIMAL(20, 8))
+    l_price = Column(DECIMAL(20, 8))
+    c_price = Column(DECIMAL(20, 8))
+    amount = Column(DECIMAL(20, 8), comment='成交额')
+    volume = Column(DECIMAL(20, 8), comment='成交量')
