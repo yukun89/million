@@ -5,7 +5,6 @@ from forecast_model import *
 from ds import *
 from store import *
 from optable import *
-from hbapi import HuobiServices as api
 from util.convert import *
 import threading
 import time

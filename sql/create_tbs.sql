@@ -52,10 +52,10 @@ CREATE TABLE if not exists `cme_info` (
   PRIMARY KEY (`ts`,`symbol`)
 );
 
-CREATE TABLE if not exists `daily_greedy_index` (
+CREATE TABLE if not exists `daily_greedy_fear_index` (
   `ts` int(11) NOT NULL COMMENT '时间戳',
   `mtime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `greedy_index` int(10) DEFAULT 50,
+  `greedy_fear_index` int(10) DEFAULT 50,
   PRIMARY KEY (`ts`)
 );
 
