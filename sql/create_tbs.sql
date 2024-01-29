@@ -59,6 +59,14 @@ CREATE TABLE if not exists `daily_greedy_fear_index` (
   PRIMARY KEY (`ts`)
 );
 
+CREATE TABLE if not exists `test_orm` (
+  `ts` int(11) NOT NULL COMMENT '时间戳',
+  `mtime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `uniq_id` int(10) DEFAULT 50,
+  `name` char(10) NOT NULL,
+  PRIMARY KEY (`ts`)
+);
+
 CREATE TABLE if not exists `block_info` (
   `ts` int(11) NOT NULL COMMENT '时间戳',
   `mtime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',

@@ -9,9 +9,19 @@ if __name__ == '__main__':
     from Schema import *
 
     # 初始化数据库连接:
-    engine = create_engine('mysql+mysqlconnector://rw_user_huangyukun:2022CpHykMillion.@localhost:3306/million')
+    engine = create_engine('mysql+pymysql://rw_user_huangyukun:2022CpHykMillion.@localhost:3306/million')
     # 创建DBSession类型:
     DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    #test insert
+    orm_item = TestOrm(ts=0,uniq_id=1,name='zhangsan')
+    # 添加到session:
+    session.add(orm_item)
+    # 提交即保存到数据库:
+    session.commit()
+    #test query
+
 else:
     #from .HbDb import *
     from .Schema import *

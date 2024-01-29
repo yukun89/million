@@ -46,12 +46,12 @@ class CmeInfo(Base):
     fund_user_short_units = Column(DECIMAL(20, 4))
 
 
-class DailyGreedyIndex(Base):
-    __tablename__ = 'daily_greedy_index'
+class DailyGreedyFearIndex(Base):
+    __tablename__ = 'daily_greedy_fear_index'
 
     ts = Column(INTEGER(11), primary_key=True, comment='时间戳')
     mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
-    greedy_index = Column(INTEGER(10), server_default=text("50"))
+    greedy_fear_index = Column(INTEGER(10), server_default=text("50"))
 
 
 class ExchangeInfo(Base):
@@ -85,3 +85,12 @@ class Kline(Base):
     c_price = Column(DECIMAL(20, 8))
     amount = Column(DECIMAL(20, 8), comment='成交额')
     volume = Column(DECIMAL(20, 8), comment='成交量')
+
+
+class TestOrm(Base):
+    __tablename__ = 'test_orm'
+
+    ts = Column(INTEGER(11), primary_key=True, comment='时间戳')
+    mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
+    uniq_id = Column(INTEGER(10), server_default=text("50"))
+    name = Column(CHAR(10, 'utf8_bin'), nullable=False)
