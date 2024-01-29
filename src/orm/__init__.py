@@ -25,10 +25,10 @@ if __name__ == '__main__':
 else:
     #from .HbDb import *
     from .Schema import *
-
-
-    DbSession = create_db_scoped_session()
-    session = DbSession()
+    engine = create_engine('mysql+pymysql://rw_user_huangyukun:2022CpHykMillion.@localhost:3306/million')
+    # 创建DBSession类型:
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
 
 
     def get_account_lsr(long_short_ratio):
