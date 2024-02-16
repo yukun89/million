@@ -1,7 +1,5 @@
-#/bin/python
+# /bin/python
 import asyncio
-import websockets
-import time
 
 
 async def func1():
@@ -9,11 +7,13 @@ async def func1():
         print("1")
         await asyncio.sleep(1)
 
+
 async def func2():
     while True:
         print("1")
         await asyncio.sleep(1)
 
-#
-asyncio.run(fun())
 
+#
+if __name__ == "__main__":
+    asyncio.run(func1())
