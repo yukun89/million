@@ -9,3 +9,8 @@ result = publicDataAPI.get_funding_rate(
     instId="BTC-USD-SWAP",
 )
 print(result)
+
+result = publicDataAPI.funding_rate_history(
+    instId="BTC-USD-SWAP",
+)
+print(result)
