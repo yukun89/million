@@ -41,16 +41,24 @@ def update_kline_data_all(instId, bar):
         print("Invalid bar:%s" % bar)
         return
     current_time = int(time.time())
-    start_ts = common.start_ts
+    start_ts = common.start_ts + 86400*365*2
     batch_num = 100
     step = common.bar_sec_dict[bar] * batch_num
     for cur in range(start_ts, current_time, step):
-        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, after=cur, before=cur+step)
+        #resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, after=cur, before=cur+step)
+        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=cur+step)
+        if resp['code'] != '0':
+            print("Error: failed to get k line. instId = %s || bar = %s || before = %s || after = %s" %(instId, bar, cur+step, cur))
+            continue
+        data = resp['data']
+        if len(data) == 0:
+            print("Empty data: k line. instId = %s || bar = %s || before = %s || after = %s" %(instId, bar, cur+step, cur))
+            continue
         print(resp['data'])
         break
     return
 
 
 if __name__ == "__main__":
-    update_greedy_fear_index(True)
-    update_kline_data_all("BTCUSDT", "1H")
+    #update_greedy_fear_index(is_batch=False)
+    update_kline_data_all("BTC-USDT", "1m")
