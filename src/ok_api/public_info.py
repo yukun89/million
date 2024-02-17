@@ -37,6 +37,17 @@ kline = """
 }
 """
 
+liquidation = """
+{
+  "op": "subscribe",
+  "args": [
+    {
+      "channel": "liquidation-orders",
+      "instType": "SWAP"
+    }
+  ]
+}
+"""
 
 async def common_api(send_info, handler):
     try:
@@ -55,8 +66,11 @@ def huge_exchange(msg):
     return
 
 
+
 if __name__ == "__main__":
     #asyncio.run(common_api(kline % ("candle1m", "BTC-USDT"), print))
     #asyncio.run(common_api(product_info, print))
     #获取实时价格
-    asyncio.run(common_api(current_price % "BTC-USDT-SWAP", print))
+    #asyncio.run(common_api(current_price % "BTC-USDT-SWAP", print))
+    asyncio.run(common_api(liquidation, print))
+
