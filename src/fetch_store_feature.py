@@ -41,24 +41,44 @@ def update_kline_data_all(instId, bar):
         print("Invalid bar:%s" % bar)
         return
     current_time = int(time.time())
-    start_ts = common.start_ts + 86400*365*2
+    start_ts = common.start_ts + 86400*365*1
     batch_num = 100
     step = common.bar_sec_dict[bar] * batch_num
     for cur in range(start_ts, current_time, step):
-        #resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, after=cur, before=cur+step)
-        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=cur+step)
+        before = cur
+        after = cur + step
+        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=cur, after=cur+step)
         if resp['code'] != '0':
-            print("Error: failed to get k line. instId = %s || bar = %s || before = %s || after = %s" %(instId, bar, cur+step, cur))
+            print("Error: failed to get k line. instId = %s || bar = %s || before = %s || after = %s" % (instId, bar, before, after))
             continue
         data = resp['data']
         if len(data) == 0:
-            print("Empty data: k line. instId = %s || bar = %s || before = %s || after = %s" %(instId, bar, cur+step, cur))
+            print("Empty data: k line. instId = %s || bar = %s || before = %s || after = %s || start = %s" % (instId, bar, before, after, timestamp2datetime(before)))
             continue
-        print(resp['data'])
+        for line in data:
+            ts = line[0]
+            o = line[1]
+            h = line[2]
+            l = line[3]
+            c = line[4]
+            vol = line[5]
+            volCcy = line[6]
+            volCcyQuote	= line[7]
+            confirm = line[8]
+            kline = orm.Schema.Kline(ts=ts,
+                                     mtime=timestamp2datetime(ts),
+                                     symbol=instId,
+                                     duration = "min",
+                                     o_price=o,
+                                     h_price=h,
+                                     l_price=l,
+                                     c_price=c)
+            orm.session.add(kline)
+        orm.session.commit()
         break
     return
 
 
 if __name__ == "__main__":
     #update_greedy_fear_index(is_batch=False)
-    update_kline_data_all("BTC-USDT", "1m")
+    update_kline_data_all("BTC-USDT", "1H")
