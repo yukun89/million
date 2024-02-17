@@ -45,7 +45,7 @@ def update_kline_data_all(instId, bar):
     batch_num = 100
     step = common.bar_sec_dict[bar] * batch_num
     for cur in range(start_ts, current_time, step):
-        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, start=cur, end=cur+step)
+        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, after=cur, before=cur+step)
         print(resp['data'])
         break
     return
