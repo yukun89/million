@@ -1,7 +1,8 @@
 import time
 import orm
 from api import etc
-
+from ok_api import public_wrapper
+from util import common
 
 def timestamp2datetime(timestamp):
     time_array = time.localtime(timestamp)
@@ -33,5 +34,23 @@ def update_greedy_fear_index(is_batch=False):
     return
 
 
+
+def update_kline_data_all(instId, bar):
+    #获取从2018年以后的所有数据
+    if bar not in common.bar_list:
+        print("Invalid bar:%s" % bar)
+        return
+    current_time = int(time.time())
+    start_ts = common.start_ts
+    batch_num = 100
+    step = common.bar_sec_dict[bar] * batch_num
+    for cur in range(start_ts, current_time, step):
+        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, start=cur, end=cur+step)
+        print(resp['data'])
+        break
+    return
+
+
 if __name__ == "__main__":
     update_greedy_fear_index(True)
+    update_kline_data_all("BTCUSDT", "1H")
