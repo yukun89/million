@@ -13,6 +13,15 @@ CREATE TABLE if not exists `kline` (
   PRIMARY KEY (`ts`,`symbol`, `trade_type`, `duration`)
 );
 
+CREATE TABLE if not exists `funding_rate` (
+  `ts` int(11) NOT NULL COMMENT '时间戳',
+  `symbol` char(10) NOT NULL,
+  `inst_id` char(20) NOT NULL COMMENT 'like:BTC-USD-SWAP',
+  `trade_type` char(20) DEFAULT '' COMMENT '现货/U合约/B合约',
+  `mtime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`ts`,`inst_id`, `trade_type`)
+);
+
 CREATE TABLE if not exists `exchange_info` (
   `ts` int(11) NOT NULL COMMENT '时间戳',
   `symbol` char(10) NOT NULL,
