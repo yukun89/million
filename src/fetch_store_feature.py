@@ -46,7 +46,7 @@ def update_coin_info():
         orm.session.merge(coin_line)
     orm.session.commit()
 
-    max_supply_updated_hour_ts = int(time.time()/3600)*3600
+    max_supply_updated_hour_ts = int(time.time() / 3600) * 3600
     for symbol_id, symbol in id_symbol_dict.items():
         this_market_data_list = etc.get_market_data(symbol_id)
         this_market_data = this_market_data_list[0]
@@ -60,7 +60,6 @@ def update_coin_info():
         orm.session.add(coin_line)
     orm.session.commit()
     return
-
 
 
 def update_kline_data_all(instId, bar, from_ts=0, to_ts=0):
@@ -131,4 +130,5 @@ def update_kline_data_all(instId, bar, from_ts=0, to_ts=0):
 
 if __name__ == "__main__":
     # update_greedy_fear_index(is_batch=False)
-    update_kline_data_all("BTC-USDT", "1H", common.start_ts, common.start_ts + 86400 * 366)
+    # update_kline_data_all("BTC-USDT", "1H", common.start_ts, common.start_ts + 86400 * 366)
+    update_coin_info()
