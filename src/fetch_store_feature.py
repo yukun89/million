@@ -39,11 +39,15 @@ def update_coin_info():
     coin_list = etc.get_coin_list()
     id_symbol_dict = {}
     for coin in coin_list:
+        print("update coin: %s" % coin)
         symbol_id = coin["id"]
         symbol = coin["symbol"]
-        id_symbol_dict[symbol_id] = symbol
-        coin_line = orm.Schema.CoinList(id=symbol_id, name=coin["name"], symbol=symbol)
+        name = coin["name"]
+        coin_line = orm.Schema.CoinList(id=symbol_id, name=name, symbol=symbol)
         orm.session.merge(coin_line)
+
+        id_symbol_dict[symbol_id] = symbol
+
     orm.session.commit()
 
     max_supply_updated_hour_ts = int(time.time() / 3600) * 3600

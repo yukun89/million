@@ -35,7 +35,7 @@ CREATE TABLE if not exists `coin_markets` (
   `total_supply` int(20) NOT NULL COMMENT '总市值',
   `max_supply` int(20) NOT NULL COMMENT '流通市值',
   `max_supply_updated_hour_ts` int(11) NOT NULL COMMENT '流通市值更新小时时间戳',
-  PRIMARY KEY (`id`, `symbol`, `max_supply_updated_hour_ts`)
+  PRIMARY KEY (`id`, `symbol`, `max_supply`)
 );
 
 
