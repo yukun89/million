@@ -61,23 +61,31 @@ def update_coin_info():
     while True:
         coin_list = etc.get_market_data(per_page=100, page_num=index)
         index += 1
+        if coin_list is None:
+            print("skip None data for index=%s"%index)
+            if index < 100:
+                continue
+            break
         for coin in coin_list:
             print(coin)
             total_supply = 0
             if coin["total_supply"] is not None:
                 total_supply = int(coin["total_supply"])
-            max_supply = total_supply
+
+            max_supply = 0
             if coin["max_supply"] is not None:
                 max_supply = int(coin["max_supply"])
             symbol = coin["symbol"]
             symbol_id = coin["id"]
+            if max_supply == 0:
+                print("not store 0 data for %s"%symbol)
             coin_line = orm.Schema.CoinMarket(id=symbol_id,
                                               symbol=symbol,
                                               total_supply=total_supply,
                                               max_supply=max_supply,
                                               max_supply_updated_hour_ts=max_supply_updated_hour_ts)
-            # no dup data
-            orm.session.add(coin_line)
+            # no dup data: TODO
+            orm.session.merge(coin_line)
         orm.session.commit()
         if len(coin_list) < 100:
             break
