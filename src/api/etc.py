@@ -79,5 +79,6 @@ if __name__ == '__main__':
     print(ret)
     # ret = get_greedy_fear_index_history()
     # print(ret)
-    ret = get_market_data("bitcoin")
+    #ret = get_market_data("bitcoin")
+    ret = get_coin_list()
     print(ret)

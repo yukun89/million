@@ -46,6 +46,24 @@ class CmeInfo(Base):
     fund_user_short_units = Column(DECIMAL(20, 4))
 
 
+class CoinList(Base):
+    __tablename__ = 'coin_list'
+
+    id = Column(CHAR(100, 'utf8_bin'), primary_key=True, nullable=False, comment='id')
+    symbol = Column(CHAR(40, 'utf8_bin'), primary_key=True, nullable=False, comment='symbol')
+    name = Column(CHAR(100, 'utf8_bin'), nullable=False, comment='name')
+
+
+class CoinMarket(Base):
+    __tablename__ = 'coin_markets'
+
+    id = Column(CHAR(100, 'utf8_bin'), primary_key=True, nullable=False, comment='id')
+    symbol = Column(CHAR(40, 'utf8_bin'), primary_key=True, nullable=False, comment='symbol')
+    total_supply = Column(INTEGER(20), nullable=False, comment='总市值')
+    max_supply = Column(INTEGER(20), nullable=False, comment='流通市值')
+    max_supply_updated_hour_ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='流通市值更新小时时间戳')
+
+
 class DailyGreedyFearIndex(Base):
     __tablename__ = 'daily_greedy_fear_index'
 
