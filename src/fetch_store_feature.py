@@ -49,8 +49,8 @@ def update_kline_data_all(instId, bar):
         after = cur
         resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId,
                                                                      bar=bar,
-                                                                     before=before,
-                                                                     after=after,
+                                                                     before=before*1000,
+                                                                     after=after*1000,
                                                                      limit=batch_num+1)
         if resp['code'] != '0':
             print("Error: failed to get k line. instId = %s || bar = %s || before = %s || from = %s" % (
