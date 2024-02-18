@@ -4,6 +4,7 @@ from api import etc
 from ok_api import public_wrapper
 from util import common
 
+
 def timestamp2datetime(timestamp):
     time_array = time.localtime(timestamp)
     return time.strftime("%Y-%m-%d %H:%M:%S", time_array)
@@ -34,50 +35,59 @@ def update_greedy_fear_index(is_batch=False):
     return
 
 
-
 def update_kline_data_all(instId, bar):
-    #获取从2018年以后的所有数据
+    # 获取从2018年以后的所有数据
     if bar not in common.bar_list:
         print("Invalid bar:%s" % bar)
         return
-    current_time = int(time.time())
-    start_ts = common.start_ts + 86400*365*1
-    batch_num = 100
+    cur = int(time.time())
+    start_ts = common.start_ts + 86400 * 365 * 1
+    batch_num = 96
     step = common.bar_sec_dict[bar] * batch_num
-    for cur in range(start_ts, current_time, step):
-        before = cur
+    while cur >= start_ts:
+        before = cur - step
         after = cur + step
-        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=before)
+        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=before,
+                                                                     limit=batch_num+1)
         if resp['code'] != '0':
-            print("Error: failed to get k line. instId = %s || bar = %s || before = %s || after = %s" % (instId, bar, before, after))
+            print("Error: failed to get k line. instId = %s || bar = %s || before = %s || after = %s" % (
+                instId, bar, before, after))
             continue
         data = resp['data']
         if len(data) == 0:
-            print("Empty data: k line. instId = %s || bar = %s || before = %s || after = %s || start = %s" % (instId, bar, before, after, timestamp2datetime(before)))
-            continue
+            print("Empty data: k line. instId = %s || bar = %s || before = %s || after = %s || start = %s" % (
+                instId, bar, before, after, timestamp2datetime(before)))
+            break
+            # no more data
         for line in data:
             ts = int(int(line[0]) / 1000)
             o = float(line[1])
             h = float(line[2])
             l = float(line[3])
             c = float(line[4])
-            vol = line[5]
-            volCcy = line[6]
-            volCcyQuote	= line[7]
-            confirm = line[8]
+            vol = float(line[5])
+            volCcy = float(line[6])
+            volCcyQuote = float(line[7])
+            confirm = float(line[8])
+            if confirm == 0:
+                continue
             kline = orm.Schema.Kline(ts=ts,
                                      mtime=timestamp2datetime(ts),
                                      symbol=instId,
-                                     duration = "min",
+                                     interval=bar,
+                                     exchange_name='okx',
                                      o_price=o,
                                      h_price=h,
                                      l_price=l,
-                                     c_price=c)
+                                     c_price=c,
+                                     vol=vol,
+                                     volCcy=volCcy,
+                                     volCcyQuote=volCcyQuote)
             orm.session.merge(kline)
         orm.session.commit()
     return
 
 
 if __name__ == "__main__":
-    #update_greedy_fear_index(is_batch=False)
+    # update_greedy_fear_index(is_batch=False)
     update_kline_data_all("BTC-USDT", "1H")
