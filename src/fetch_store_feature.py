@@ -63,7 +63,9 @@ def update_coin_info():
         index += 1
         for coin in coin_list:
             print(coin)
-            total_supply = int(coin["total_supply"])
+            total_supply = 0
+            if coin["total_supply"] is not None:
+                total_supply = int(coin["total_supply"])
             max_supply = total_supply
             if coin["max_supply"] is not None:
                 max_supply = int(coin["max_supply"])
