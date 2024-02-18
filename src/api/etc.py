@@ -18,7 +18,7 @@ def get_greedy_fear_index_now():
     return ret_json['now']
 
 
-def get_market_data(symbol_id):
+def get_market_data(per_page=100, page_num=1):
     """
     id: btc > bitcoin
     id can be get using get_coin_list
@@ -55,7 +55,8 @@ def get_market_data(symbol_id):
 ]
     """
     ret_json = http_utils_.https_get_request('api.coingecko.com',
-                                             '/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&locale=en&ids=%s' % symbol_id)
+                                             '/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=%s&page=%s&sparkline=false&locale=en' % (
+                                             per_page, page_num))
     return ret_json
 
 
@@ -79,6 +80,6 @@ if __name__ == '__main__':
     print(ret)
     # ret = get_greedy_fear_index_history()
     # print(ret)
-    #ret = get_market_data("bitcoin")
+    # ret = get_market_data("bitcoin")
     ret = get_coin_list()
     print(ret)

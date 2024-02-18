@@ -35,7 +35,7 @@ def update_greedy_fear_index(is_batch=False):
     return
 
 
-def update_coin_info():
+"""
     coin_list = etc.get_coin_list()
     id_symbol_dict = {}
     for coin in coin_list:
@@ -52,21 +52,30 @@ def update_coin_info():
         id_symbol_dict[symbol_id] = symbol
 
     orm.session.commit()
+"""
 
+
+def update_coin_info():
     max_supply_updated_hour_ts = int(time.time() / 3600) * 3600
-    for symbol_id, symbol in id_symbol_dict.items():
-        this_market_data_list = etc.get_market_data(symbol_id)
-        this_market_data = this_market_data_list[0]
-        total_supply = int(this_market_data["total_supply"])
-        max_supply = int(this_market_data["max_supply"])
-        coin_line = orm.Schema.CoinMarket(id=symbol_id,
-                                          symbol=symbol,
-                                          total_supply=total_supply,
-                                          max_supply=max_supply,
-                                          max_supply_updated_hour_ts=max_supply_updated_hour_ts)
-        #no dup data
-        orm.session.add(coin_line)
-    orm.session.commit()
+    index = 1
+    while True:
+        coin_list = etc.get_market_data(per_page=100, page_num=index)
+        index += 1
+        for coin in coin_list:
+            total_supply = int(coin["total_supply"])
+            max_supply = int(coin["max_supply"])
+            symbol = coin["symbol"]
+            symbol_id = coin["id"]
+            coin_line = orm.Schema.CoinMarket(id=symbol_id,
+                                              symbol=symbol,
+                                              total_supply=total_supply,
+                                              max_supply=max_supply,
+                                              max_supply_updated_hour_ts=max_supply_updated_hour_ts)
+            # no dup data
+            orm.session.add(coin_line)
+        orm.session.commit()
+        if len(coin_list) < 100:
+            break
     return
 
 
