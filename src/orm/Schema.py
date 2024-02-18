@@ -1,6 +1,6 @@
 # coding: utf-8
 from sqlalchemy import CHAR, Column, DECIMAL, DateTime, Float, text
-from sqlalchemy.dialects.mysql import ENUM, INTEGER
+from sqlalchemy.dialects.mysql import BIGINT, ENUM, INTEGER
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -59,9 +59,9 @@ class CoinMarket(Base):
 
     id = Column(CHAR(100, 'utf8_bin'), primary_key=True, nullable=False, comment='id')
     symbol = Column(CHAR(40, 'utf8_bin'), primary_key=True, nullable=False, comment='symbol')
-    total_supply = Column(INTEGER(20), nullable=False, comment='总市值')
-    max_supply = Column(INTEGER(20), nullable=False, comment='流通市值')
-    max_supply_updated_hour_ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='流通市值更新小时时间戳')
+    total_supply = Column(BIGINT(20), nullable=False, comment='总市值')
+    max_supply = Column(BIGINT(20), primary_key=True, nullable=False, comment='流通市值')
+    max_supply_updated_hour_ts = Column(INTEGER(11), nullable=False, comment='流通市值更新小时时间戳')
 
 
 class DailyGreedyFearIndex(Base):
