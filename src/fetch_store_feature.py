@@ -35,13 +35,19 @@ def update_greedy_fear_index(is_batch=False):
     return
 
 
-def update_kline_data_all(instId, bar):
+def update_kline_data_all(instId, bar, from_ts=0, to_ts=0):
     # 获取从2018年以后的所有数据
     if bar not in common.bar_list:
         print("Invalid bar:%s" % bar)
         return
     cur = int(time.time())
-    start_ts = common.start_ts + 86400 * 365 * 1
+    if to_ts > 0:
+        cur = to_ts
+
+    start_ts = common.start_ts
+    if from_ts > 0:
+        start_ts = from_ts
+
     batch_num = 96
     step = common.bar_sec_dict[bar] * batch_num
     while cur >= start_ts:
@@ -97,4 +103,4 @@ def update_kline_data_all(instId, bar):
 
 if __name__ == "__main__":
     # update_greedy_fear_index(is_batch=False)
-    update_kline_data_all("BTC-USDT", "1H")
+    update_kline_data_all("BTC-USDT", "1H", common.start_ts, common.start_ts + 86400*366)
