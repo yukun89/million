@@ -47,7 +47,7 @@ def update_kline_data_all(instId, bar):
     for cur in range(start_ts, current_time, step):
         before = cur
         after = cur + step
-        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=cur, after=cur+step)
+        resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=before)
         if resp['code'] != '0':
             print("Error: failed to get k line. instId = %s || bar = %s || before = %s || after = %s" % (instId, bar, before, after))
             continue
@@ -56,11 +56,11 @@ def update_kline_data_all(instId, bar):
             print("Empty data: k line. instId = %s || bar = %s || before = %s || after = %s || start = %s" % (instId, bar, before, after, timestamp2datetime(before)))
             continue
         for line in data:
-            ts = line[0]
-            o = line[1]
-            h = line[2]
-            l = line[3]
-            c = line[4]
+            ts = int(int(line[0]) / 1000)
+            o = float(line[1])
+            h = float(line[2])
+            l = float(line[3])
+            c = float(line[4])
             vol = line[5]
             volCcy = line[6]
             volCcyQuote	= line[7]
@@ -73,9 +73,8 @@ def update_kline_data_all(instId, bar):
                                      h_price=h,
                                      l_price=l,
                                      c_price=c)
-            orm.session.add(kline)
+            orm.session.merge(kline)
         orm.session.commit()
-        break
     return
 
 
