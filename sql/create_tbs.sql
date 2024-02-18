@@ -22,6 +22,24 @@ CREATE TABLE if not exists `funding_rate` (
   PRIMARY KEY (`ts`,`symbol`, `exchange_name`)
 );
 
+CREATE TABLE if not exists `coin_list` (
+  `id` char(100) NOT NULL COMMENT 'id',
+  `symbol` char(40) NOT NULL COMMENT 'symbol',
+  `name` char(100) NOT NULL COMMENT 'name',
+  PRIMARY KEY (`id`, `symbol`)
+);
+
+CREATE TABLE if not exists `coin_markets` (
+  `id` char(100) COLLATE utf8_bin NOT NULL COMMENT 'id',
+  `symbol` char(40) COLLATE utf8_bin NOT NULL COMMENT 'symbol',
+  `total_supply` int(20) NOT NULL COMMENT '总市值',
+  `max_supply` int(20) NOT NULL COMMENT '流通市值',
+  `max_supply_updated_hour_ts` int(11) NOT NULL COMMENT '流通市值更新小时时间戳',
+  PRIMARY KEY (`id`, `symbol`, `max_supply_updated_hour_ts`)
+);
+
+
+
 CREATE TABLE if not exists `exchange_info` (
   `ts` int(11) NOT NULL COMMENT '时间戳',
   `symbol` char(10) NOT NULL,
