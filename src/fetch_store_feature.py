@@ -62,8 +62,11 @@ def update_coin_info():
         coin_list = etc.get_market_data(per_page=100, page_num=index)
         index += 1
         for coin in coin_list:
+            print(coin)
             total_supply = int(coin["total_supply"])
-            max_supply = int(coin["max_supply"])
+            max_supply = total_supply
+            if coin["max_supply"] is not None:
+                max_supply = int(coin["max_supply"])
             symbol = coin["symbol"]
             symbol_id = coin["id"]
             coin_line = orm.Schema.CoinMarket(id=symbol_id,
