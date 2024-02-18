@@ -1,25 +1,25 @@
 CREATE TABLE if not exists `kline` (
   `ts` int(11) NOT NULL COMMENT '时间戳',
-  `symbol` char(10) NOT NULL,
-  `trade_type` char(20) DEFAULT '' COMMENT '现货/U合约/B合约',
+  `exchange_name` char(20) DEFAULT 'okx' COMMENT '交易所名称',
+  `symbol` char(20) NOT NULL,
   `mtime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `duration` enum('min','hour','day','week') NOT NULL,
-  `o_price` decimal(20,8) DEFAULT NULL,
-  `h_price` decimal(20,8) DEFAULT NULL,
-  `l_price` decimal(20,8) DEFAULT NULL,
-  `c_price` decimal(20,8) DEFAULT NULL,
-  `amount` decimal(20,8) DEFAULT NULL COMMENT '成交额',
-  `volume` decimal(20,8) DEFAULT NULL COMMENT '成交量',
-  PRIMARY KEY (`ts`,`symbol`, `trade_type`, `duration`)
+  `interval` enum('1H','4H','1D','1W') NOT NULL,
+  `o_price` decimal(20,10) DEFAULT NULL,
+  `h_price` decimal(20,10) DEFAULT NULL,
+  `l_price` decimal(20,10) DEFAULT NULL,
+  `c_price` decimal(20,10) DEFAULT NULL,
+  `vol` decimal(20,4) DEFAULT NULL COMMENT '成交量:交易量，以张为单位',
+  `volCcy` decimal(20,4) DEFAULT NULL COMMENT '成交量:交易量，以币为单位',
+  `volCcyQuote` decimal(20,4) DEFAULT NULL COMMENT '成交量:交易量，以计价货币为单位',
+  PRIMARY KEY (`ts`,`symbol`, `interval`, `exchange_name`)
 );
 
 CREATE TABLE if not exists `funding_rate` (
   `ts` int(11) NOT NULL COMMENT '时间戳',
-  `symbol` char(10) NOT NULL,
-  `inst_id` char(20) NOT NULL COMMENT 'like:BTC-USD-SWAP',
-  `trade_type` char(20) DEFAULT '' COMMENT '现货/U合约/B合约',
+  `symbol` char(10) NOT NULL COMMENT 'like:BTC-USDT-SWAP',
   `mtime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`ts`,`inst_id`, `trade_type`)
+  `exchange_name` char(20) DEFAULT 'okx' COMMENT '交易所名称',
+  PRIMARY KEY (`ts`,`symbol`, `exchange_name`)
 );
 
 CREATE TABLE if not exists `exchange_info` (
