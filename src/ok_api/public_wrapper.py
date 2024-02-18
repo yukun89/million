@@ -1,11 +1,12 @@
 import okx.PublicData as PublicData
 import okx.MarketData as MarketData
+import okx.TradingData as TradingData_api
 
 flag = "0"  # 实盘:0 , 模拟盘：1
 
 publicDataAPI = PublicData.PublicAPI(flag=flag)
 marketDataAPI = MarketData.MarketAPI(flag=flag)
-
+tradingDataAPI = TradingData_api.TradingDataAPI(flag=flag)
 
 if __name__ == "__main__":
 
@@ -24,4 +25,8 @@ if __name__ == "__main__":
     result = marketDataAPI.get_history_candlesticks(
         instId="BTC-USDT"
     )
+    print(result)
+
+    # 获取交易大数据支持币种
+    result = tradingDataAPI.get_support_coin()
     print(result)
