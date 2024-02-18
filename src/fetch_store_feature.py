@@ -61,6 +61,7 @@ def update_kline_data_all(instId, bar):
         cur -= step
         for line in data:
             ts = int(int(line[0]) / 1000)
+            mtime=timestamp2datetime(ts)
             o = float(line[1])
             h = float(line[2])
             l = float(line[3])
@@ -72,7 +73,7 @@ def update_kline_data_all(instId, bar):
             if confirm == 0:
                 continue
             kline = orm.Schema.Kline(ts=ts,
-                                     mtime=timestamp2datetime(ts),
+                                     mtime=mtime,
                                      symbol=instId,
                                      interval=bar,
                                      exchange_name='okx',
@@ -84,6 +85,8 @@ def update_kline_data_all(instId, bar):
                                      volCcy=volCcy,
                                      volCcyQuote=volCcyQuote)
             orm.session.merge(kline)
+            print("update k line data. mtime=%s||symbol=%s||interval=%s||o_price=%s||c_price=%s||vol=%s"
+                  % (mtime, instId, bar, o, c, vol))
         orm.session.commit()
     return
 
