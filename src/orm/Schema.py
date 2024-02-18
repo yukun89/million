@@ -75,16 +75,17 @@ class Kline(Base):
     __tablename__ = 'kline'
 
     ts = Column(INTEGER(11), primary_key=True, nullable=False, comment='时间戳')
-    symbol = Column(CHAR(10, 'utf8_bin'), primary_key=True, nullable=False)
-    trade_type = Column(CHAR(20, 'utf8_bin'), primary_key=True, nullable=False, server_default=text("''"), comment='现货/U合约/B合约')
+    exchange_name = Column(CHAR(20, 'utf8_bin'), primary_key=True, nullable=False, server_default=text("'okx'"), comment='交易所名称')
+    symbol = Column(CHAR(20, 'utf8_bin'), primary_key=True, nullable=False)
     mtime = Column(DateTime, nullable=False, server_default=text("'0000-00-00 00:00:00'"))
-    duration = Column(ENUM('min', 'hour', 'day', 'week'), primary_key=True, nullable=False)
-    o_price = Column(DECIMAL(20, 8))
-    h_price = Column(DECIMAL(20, 8))
-    l_price = Column(DECIMAL(20, 8))
-    c_price = Column(DECIMAL(20, 8))
-    amount = Column(DECIMAL(20, 8), comment='成交额')
-    volume = Column(DECIMAL(20, 8), comment='成交量')
+    interval = Column(ENUM('1H', '4H', '1D', '1W'), primary_key=True, nullable=False)
+    o_price = Column(DECIMAL(20, 10))
+    h_price = Column(DECIMAL(20, 10))
+    l_price = Column(DECIMAL(20, 10))
+    c_price = Column(DECIMAL(20, 10))
+    vol = Column(DECIMAL(20, 4), comment='成交量:交易量，以张为单位')
+    volCcy = Column(DECIMAL(20, 4), comment='成交量:交易量，以币为单位')
+    volCcyQuote = Column(DECIMAL(20, 4), comment='成交量:交易量，以计价货币为单位')
 
 
 class TestOrm(Base):
