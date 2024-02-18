@@ -39,8 +39,11 @@ def update_coin_info():
     coin_list = etc.get_coin_list()
     id_symbol_dict = {}
     for coin in coin_list:
-        print("update coin: %s" % coin)
         symbol_id = coin["id"]
+        if symbol_id == "cassie-dragon":
+            print("skip coin: %s" % coin)
+            continue
+        print("update coin: %s" % coin)
         symbol = coin["symbol"]
         name = coin["name"]
         coin_line = orm.Schema.CoinList(id=symbol_id, name=name, symbol=symbol)
@@ -61,6 +64,7 @@ def update_coin_info():
                                           total_supply=total_supply,
                                           max_supply=max_supply,
                                           max_supply_updated_hour_ts=max_supply_updated_hour_ts)
+        #no dup data
         orm.session.add(coin_line)
     orm.session.commit()
     return
