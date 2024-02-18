@@ -46,19 +46,19 @@ def update_kline_data_all(instId, bar):
     step = common.bar_sec_dict[bar] * batch_num
     while cur >= start_ts:
         before = cur - step
-        after = cur + step
         resp = public_wrapper.marketDataAPI.get_history_candlesticks(instId=instId, bar=bar, before=before,
                                                                      limit=batch_num+1)
         if resp['code'] != '0':
-            print("Error: failed to get k line. instId = %s || bar = %s || before = %s || after = %s" % (
-                instId, bar, before, after))
+            print("Error: failed to get k line. instId = %s || bar = %s || before = %s || from = %s" % (
+                instId, bar, before, timestamp2datetime(before)))
             continue
         data = resp['data']
         if len(data) == 0:
-            print("Empty data: k line. instId = %s || bar = %s || before = %s || after = %s || start = %s" % (
-                instId, bar, before, after, timestamp2datetime(before)))
+            print("Empty data: k line. instId = %s || bar = %s || before = %s || start = %s" % (
+                instId, bar, before, timestamp2datetime(before)))
             break
             # no more data
+        cur -= step
         for line in data:
             ts = int(int(line[0]) / 1000)
             o = float(line[1])
