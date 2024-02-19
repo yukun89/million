@@ -2,6 +2,7 @@
 import asyncio
 import websockets
 import time
+import json
 #获取ok上的公共信息：非私有信息，相对安全，不需要API key
 
 PUBLIC_URL = "wss://ws.okx.com:8443/ws/v5/public"
@@ -62,7 +63,17 @@ async def common_api(send_info, handler):
         print(e)
 
 
-def huge_exchange(msg):
+def handle_huge_liquidation(msg):
+    msg = json.loads(msg)
+    if msg.get('data') is None:
+        return
+    instId = msg['data'][0]['instId']
+
+    body = msg['data'][0]['details'][0]
+    posSide = body['posSide']
+    sz = int(body['sz'])
+    if sz > 1000:
+        print("luquidation %s: instId=%s || posSide=%s || sz = %s" % (time.ctime(), instId, posSide, sz))
     return
 
 
@@ -72,5 +83,5 @@ if __name__ == "__main__":
     #asyncio.run(common_api(product_info, print))
     #获取实时价格
     #asyncio.run(common_api(current_price % "BTC-USDT-SWAP", print))
-    asyncio.run(common_api(liquidation, print))
+    asyncio.run(common_api(liquidation, handle_huge_liquidation))
 

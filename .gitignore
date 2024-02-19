@@ -2,3 +2,4 @@ log
 __pycache__
 *.pyc
 .idea
+py3.8_env
