@@ -6,6 +6,6 @@ from ok_api import public_info
 
 
 if __name__ == "__main__":
-    hlog.init("log/listen.log")
+    hlog.init("log/listen.log", level=hlog.INFO)
     log_info("Starting listen")
     asyncio.run(public_info.common_api(public_info.liquidation, public_info.handle_huge_liquidation))
