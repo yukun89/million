@@ -73,7 +73,7 @@ def handle_huge_liquidation(msg):
     posSide = body['posSide']
     sz = int(body['sz'])
     if sz > 1000:
-        print("luquidation %s: instId=%s || posSide=%s || sz = %s" % (time.ctime(), instId, posSide, sz))
+        print("liquidation %s: instId=%s || posSide=%s || sz = %s" % (time.ctime(), instId, posSide, sz))
     return
 
 

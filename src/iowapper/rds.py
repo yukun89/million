@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import redis    # 导入redis 模块
+import time
+
 
 pool = redis.ConnectionPool(host='localhost', port=6379, decode_responses=True)
 g_redis = redis.Redis(host='localhost', port=6379, decode_responses=True) 
@@ -23,4 +25,4 @@ def sub():
                 # Process the message
                 print(f"Received message: {message_data}")
                 # Acknowledge the message by removing it from the stream
-                rds.xdel('my_queue', message_id)
+                g_redis.xdel('my_queue', message_id)
