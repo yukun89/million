@@ -3,7 +3,7 @@ import orm
 from api import etc
 from ok_api import public_wrapper
 from util import common
-
+import schedule
 
 def timestamp2datetime(timestamp):
     time_array = time.localtime(timestamp)
@@ -156,6 +156,7 @@ def update_kline_data_all(instId, bar, from_ts=0, to_ts=0):
                   % (mtime, instId, bar, o, c, vol))
         orm.session.commit()
     return
+
 
 
 if __name__ == "__main__":
