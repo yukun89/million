@@ -3,6 +3,7 @@ import redis
 
 rds = redis.StrictRedis(host="localhost", port=6379, db=0, decode_responses=True)
 
+
 # 创建一个订阅者
 def sub():
     while True:
@@ -14,6 +15,6 @@ def sub():
                 # Acknowledge the message by removing it from the stream
                 rds.xdel('my_queue', message_id)
 
-if __name__ =="__main__":
-    sub()
 
+if __name__ == "__main__":
+    sub()
