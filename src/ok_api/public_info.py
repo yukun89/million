@@ -4,10 +4,13 @@ import websockets
 import time
 import json
 
+
 if __name__ == "__main__":
     from ..iowapper import rds
+    from ..hlog import log_info, log_debug, log_error, log_warn
 else:
     from iowapper import rds
+    from hlog import log_info, log_debug, log_error, log_warn
 
 # 获取ok上的公共信息：非私有信息，相对安全，不需要API key
 
@@ -89,7 +92,8 @@ def handle_huge_liquidation(msg):
     rds.g_redis.expire(lqd_key, 86400)
     value = rds.g_redis.get(lqd_key)
     if value is not None and int(value) > 10000:
-        print("liquidation : key=%s || sz = %s || %d" % (time.ctime(), lqd_key, value))
+        log_info("liquidation : key=%s || sz = %s || %d" % (time.ctime(), lqd_key, value))
+    log_debug(f"liquidation:{body}")
 
     return
 
