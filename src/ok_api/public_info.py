@@ -69,11 +69,18 @@ def handle_huge_liquidation(msg):
         return
     instId = msg['data'][0]['instId']
 
+    #{'bkLoss': '0', 'bkPx': '0.03728', 'ccy': '', 'posSide': 'long', 'side': 'sell', 'sz': '187', 'ts': '1708401881098'}
     body = msg['data'][0]['details'][0]
     posSide = body['posSide']
     sz = int(body['sz'])
-    if sz > 1000:
-        print("liquidation %s: instId=%s || posSide=%s || sz = %s" % (time.ctime(), instId, posSide, sz))
+    price = float(body['bkPx'])
+    side = body['side']
+    ts = int(body['ts'])
+    
+    cur_min = int(time.time()/60)*60
+    redis_prefix = f"lqd__{instId}__{side}__{posSide}__{cur_min}"
+    if sz > 100:
+        print("luquidation %s: instId=%s || posSide=%s || sz = %s" % (time.ctime(), instId, posSide, sz))
     return
 
 
