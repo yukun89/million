@@ -14,7 +14,7 @@ def loop_run():
 
 
 if __name__ == "__main__":
-    hlog.init("log/store.log")
+    hlog.init("logs/store.log")
     log_info("Starting cron_job")
 
     schedule.every(8).hours.do(store.update_greedy_fear_index)

@@ -77,6 +77,7 @@ def handle_huge_liquidation(msg):
     msg = json.loads(msg)
     if msg.get('data') is None:
         return
+    log_debug("%s"%msg['data'][0])
     instId = msg['data'][0]['instId']
 
     # {'bkLoss': '0', 'bkPx': '0.03728', 'ccy': '', 'posSide': 'long', 'side': 'sell', 'sz': '187', 'ts': '1708401881098'}
@@ -86,14 +87,20 @@ def handle_huge_liquidation(msg):
     price = float(body['bkPx'])
     side = body['side']
     ts = int(body['ts'])
-    cur_min = int(ts / 60) * 60
+    cur_min = int(ts / 1000/ 60) * 60
     lqd_key = f"lqd__{instId}__{side}__{posSide}__{cur_min}"
+    log_info("liquidation new: key=%s || time = %s || sz=%d" % (lqd_key, time.ctime(), sz))
     rds.g_redis.incrby(lqd_key, sz)
     rds.g_redis.expire(lqd_key, 86400)
     value = rds.g_redis.get(lqd_key)
-    if value is not None and int(value) > 10000:
-        log_info("liquidation : key=%s || sz = %s || %d" % (time.ctime(), lqd_key, value))
-    log_debug(f"liquidation:{body}")
+    print(type(value), value)
+    log_info("liquidation sum: key=%s || time = %s || sz=%d" % (lqd_key, time.ctime(), value))
+    if value is not None:
+        large_num = 1000*100
+        if instId == 'BTC-USDT-SWAP' or instId == 'ETH-USDT-SWAP':
+            large_num = 1000*500
+        if int(value) > large_num:
+            log_info("large liquidation : key=%s || time = %s || sz=%dk" % (lqd_key, time.ctime(), value/1000))
 
     return
 
