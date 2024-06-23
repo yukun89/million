@@ -101,7 +101,7 @@ def update_kline_data_all(instId, bar, from_ts=0, to_ts=0):
     if to_ts > 0:
         cur = to_ts
 
-    start_ts = common.start_ts
+    start_ts = common.start_ts_2018
     if from_ts > 0:
         start_ts = from_ts
 
@@ -158,8 +158,16 @@ def update_kline_data_all(instId, bar, from_ts=0, to_ts=0):
     return
 
 
+def fill_blank_kline():
+    __fill_blank_kline("ETH", common.start_ts_2018, common.start_ts_2024+86400*175)
+
+def __fill_blank_kline(currency, start_ts, end_ts):
+    #update_kline_data_all(currency +"-USDT", "1H", start_ts, end_ts)
+    #update_kline_data_all(currency +"-USDT", "4H", start_ts, end_ts)
+    update_kline_data_all(currency +"-USDT", "1D", start_ts, end_ts)
+    #update_kline_data_all(currency +"-USDT", "1W", start_ts, end_ts)
 
 if __name__ == "__main__":
     # update_greedy_fear_index(is_batch=False)
-    # update_kline_data_all("BTC-USDT", "1H", common.start_ts, common.start_ts + 86400 * 366)
-    update_coin_info()
+    fill_blank_kline()
+    # update_coin_info()
